@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { MessageSquare, Gift, Heart, UserPlus, Zap } from 'lucide-react';
+import DebugPanel from './components/DebugPanel';
 
 const SOCKET_URL = 'http://localhost:3000';
 
@@ -19,8 +20,56 @@ const PlatformIcon = ({ platform }) => {
 function App() {
     const [messages, setMessages] = useState([]);
     const [activities, setActivities] = useState([]);
+    const [theme, setTheme] = useState('minimal');
     const chatEndRef = useRef(null);
     const activityEndRef = useRef(null);
+
+    // Simulation Handler
+    const handleSimulation = (type, data) => {
+        if (type === 'theme') {
+            setTheme(data);
+            return;
+        }
+        if (type === 'chat') {
+            const msg = {
+                id: 'sim-' + Date.now(),
+                platform: data.platform,
+                user: data.user,
+                text: data.text,
+                color: data.color,
+                timestamp: new Date().toISOString()
+            };
+            setMessages((prev) => [...prev, msg].slice(-100));
+        } else if (type === 'activity') {
+            const act = {
+                id: 'sim-' + Date.now(),
+                type: data.type,
+                platform: data.platform,
+                user: data.user,
+                details: data.details,
+                timestamp: new Date().toISOString()
+            };
+            setActivities((prev) => [...prev, act].slice(-50));
+        }
+    };
+
+    // ... useEffects ...
+
+    // Helper for Activity Styles
+    const getActivityStyle = (type) => {
+        if (theme === 'minimal') {
+            return 'bg-[#1e1e1e] border-gray-800';
+        }
+        // Colorful Theme
+        switch (type) {
+            case 'follow': return 'bg-blue-900/20 border-blue-900';
+            case 'sub': return 'bg-purple-900/20 border-purple-900';
+            case 'tip': return 'bg-yellow-900/20 border-yellow-900';
+            case 'gift': return 'bg-pink-900/20 border-pink-900';
+            default: return 'bg-gray-900/20 border-gray-700';
+        }
+    };
+
 
     useEffect(() => {
         const socket = io(SOCKET_URL);
@@ -58,6 +107,7 @@ function App() {
     }, [messages]);
 
     useEffect(() => {
+        // Only scroll if new activity, simple check
         activityEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [activities]);
 
@@ -73,7 +123,8 @@ function App() {
     };
 
     return (
-        <div className="flex h-screen w-full bg-[#0f0f0f] text-gray-200 font-sans overflow-hidden">
+        <div className="flex h-screen w-full bg-[#0f0f0f] text-gray-200 font-sans overflow-hidden relative">
+            <DebugPanel onSimulate={handleSimulation} />
 
             {/* Left Column: Chat */}
             <div className="w-1/2 flex flex-col border-r border-gray-800">
@@ -84,7 +135,7 @@ function App() {
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {messages.map((msg, idx) => (
-                        <div key={msg.id || idx} className="group flex items-start animate-fade-in">
+                        <div key={msg.id || idx} className="group flex items-start animate-slide-in">
                             {/* Optional Avatar */}
                             {msg.avatar && (
                                 <img src={msg.avatar} alt={msg.user} className="w-8 h-8 rounded-full mr-3 mt-1 bg-gray-700" />
@@ -115,7 +166,7 @@ function App() {
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {activities.map((act, idx) => (
-                        <div key={act.id || idx} className="flex items-center p-3 bg-[#1e1e1e] rounded-lg border border-gray-800 shadow-sm">
+                        <div key={act.id || idx} className={`flex items-center p-3 rounded-lg border shadow-sm animate-fade-in transition-all duration-300 ${getActivityStyle(act.type)}`}>
                             <div className="mr-4 p-2 bg-[#2a2a2a] rounded-full">
                                 {getActivityIcon(act.type)}
                             </div>
