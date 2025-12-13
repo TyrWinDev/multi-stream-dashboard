@@ -7,8 +7,9 @@ const cors = require('cors');
 const tmi = require('tmi.js');
 const { WebcastPushConnection } = require('tiktok-live-connector');
 
+// @retconned/kick-js uses createClient
+const { createClient } = require('@retconned/kick-js');
 
-const Kick = require('@retconned/kick-js');
 
 // --- Configuration ---
 const PORT = process.env.PORT || 3000;
@@ -112,25 +113,29 @@ console.log("YouTube integration is currently disabled.");
 
 // 4. Kick (using @retconned/kick-js)
 if (process.env.KICK_CHANNEL_ID) {
-    // kick-js usually takes a channel ID or slug. Verification needed on implementation.
-    // Assuming constructor takes channel slug/id
     try {
-        const kick = new Kick({
-            channel: process.env.KICK_CHANNEL_ID
+        // Initialize client for the specific channel
+        const kickClient = createClient(process.env.KICK_CHANNEL_ID, {
+            logger: false, // Set true for debugging
+            readOnly: true
         });
 
-        kick.on('ChatMessage', (data) => {
-            // Structure depends on library version, mocking standard access
-            const user = data.sender.username;
-            const text = data.content;
-            normalizeMsg('kick', user, text, data.sender.identity?.color);
+        kickClient.on('ChatMessage', (message) => {
+            const user = message.sender.username;
+            const text = message.content;
+            const color = message.sender.identity?.color || '#53fc18'; // Default Kick green
+            normalizeMsg('kick', user, text, color);
         });
 
-        // kick.connect(); // Check if connect is needed or auto
+        // We are skipping .login({...}) for now as we only need to read chat.
+        // If the library mandates login even for readOnly, we might need dummy credentials or user input.
+        console.log(`Listening to Kick channel: ${process.env.KICK_CHANNEL_ID}`);
+
     } catch (e) {
-        console.error("Kick connection setup failed", e);
+        console.error("Kick Setup Error:", e.message);
     }
 }
+
 
 
 // 5. StreamElements (Activity Feed for Twitch/YT/Kick)
