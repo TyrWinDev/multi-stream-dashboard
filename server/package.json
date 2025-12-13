@@ -1,0 +1,20 @@
+{
+  "name": "stream-dashboard-server",
+  "version": "1.0.0",
+  "description": "Unified Stream Dashboard Backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@retconned/kick-js": "^0.5.4",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "tiktok-live-connector": "^2.1.1-beta1",
+    "tmi.js": "^1.8.5"
+  }
+}
