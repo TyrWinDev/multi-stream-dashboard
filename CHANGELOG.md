@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [1.1.0] - 2025-12-14
 
 ### Added
+- **Stream Manager**: Integrated directly into the main layout (right column footer). Replaced floating `MetadataPanel`.
+- **Status Bar**: Fixed footer bar for global controls (Simulation, Connections) and copyright info.
+- **Settings & Debug**: Refactored to be controlled modals managed by `App.jsx`, removing floating toggle buttons.
 - **Stream Metadata Manager**: A new floating panel (bottom-left) allows users to update stream titles, game categories (Twitch), and update multiple platforms simultaneously (Twitch, YouTube).
 - **Disconnect Functionality**: Users can now disconnect/logout from Twitch, Kick, YouTube, and TikTok directly from the Settings Panel.
 - **YouTube Integration**: Full OAuth 2.0 flow, chat pooling, and connection status for YouTube Live.

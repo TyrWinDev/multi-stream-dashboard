@@ -1,12 +1,33 @@
 import React from 'react';
 import { Settings, Lock, X } from 'lucide-react';
 
-const SettingsPanel = ({ authStatus }) => {
-    const [isOpen, setIsOpen] = React.useState(false);
+const SettingsPanel = ({ authStatus, isOpen, onClose }) => {
+    // Click Outside Handler
+    const panelRef = React.useRef(null);
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (panelRef.current && !panelRef.current.contains(event.target)) {
+                onClose();
+            }
+        };
 
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen, onClose]);
+
+    // If not open, render nothing (toggle is now in StatusBar)
+    if (!isOpen) return null;
+
+    // ... (rest of component) ...
     // If authStatus is not passed from parent (e.g. standalone test), simple fallback
     const status = authStatus || { twitch: false, kick: false };
 
+    // ... (connect handlers remain the same) ...
     const connectTwitch = () => {
         // Force fully qualified URL to avoid any relative path ambiguity
         window.location.assign('https://localhost:3001/api/auth/twitch');
@@ -83,49 +104,15 @@ const SettingsPanel = ({ authStatus }) => {
         );
     };
 
-    // Click Outside Handler
-    const panelRef = React.useRef(null);
-    React.useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (panelRef.current && !panelRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [isOpen]);
-
-    if (!isOpen) {
-        return (
-            <button
-                onClick={() => setIsOpen(true)}
-                className="fixed bottom-4 left-4 p-3 bg-gray-800 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white transition-all shadow-lg border border-gray-700 z-50"
-                title="Open Settings"
-            >
-                <Settings className="w-6 h-6" />
-                {/* Optional Status Indicator Dot */}
-                {(status.twitch?.connected || status.kick?.connected) && (
-                    <span className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0f0f0f]"></span>
-                )}
-            </button>
-        );
-    }
-
     return (
-        <div ref={panelRef} className="fixed bottom-4 left-4 w-72 bg-[#1a1a1a] border border-gray-700 rounded-lg shadow-xl p-4 z-[100] animate-fade-in">
+        <div ref={panelRef} className="fixed bottom-14 right-4 w-72 bg-[#1a1a1a] border border-gray-700 rounded-lg shadow-xl p-4 z-[100] animate-fade-in">
             <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
                 <h3 className="font-bold text-white flex items-center">
                     <Settings className="w-4 h-4 mr-2 text-gray-400" />
                     Connection Manager
                 </h3>
                 <button
-                    onClick={() => setIsOpen(false)}
+                    onClick={onClose}
                     className="relative p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors z-[110] cursor-pointer"
                 >
                     <X className="w-5 h-5 pointer-events-none" />

@@ -1,29 +1,35 @@
 import React from 'react';
 import { Bug } from 'lucide-react';
 
-const DebugPanel = ({ onSimulate }) => {
-    const [isOpen, setIsOpen] = React.useState(false);
+const DebugPanel = ({ onSimulate, isOpen, onClose }) => {
+    // Click Outside Handler
+    const panelRef = React.useRef(null);
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (panelRef.current && !panelRef.current.contains(event.target)) {
+                onClose();
+            }
+        };
 
-    if (!isOpen) {
-        return (
-            <button
-                onClick={() => setIsOpen(true)}
-                className="fixed bottom-4 right-4 p-3 bg-gray-800 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white transition-all shadow-lg border border-gray-700 z-50"
-                title="Open Debug Panel"
-            >
-                <Bug className="w-6 h-6" />
-            </button>
-        );
-    }
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen, onClose]);
+
+    if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 w-72 bg-[#1a1a1a] border border-gray-700 rounded-lg shadow-xl p-4 z-50 animate-fade-in">
+        <div ref={panelRef} className="fixed bottom-14 right-4 w-72 bg-[#1a1a1a] border border-gray-700 rounded-lg shadow-xl p-4 z-50 animate-fade-in">
             <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
                 <h3 className="font-bold text-white flex items-center">
                     <Bug className="w-4 h-4 mr-2 text-green-400" />
                     Simulation
                 </h3>
-                <button onClick={() => setIsOpen(false)} className="text-gray-500 hover:text-white">✕</button>
+                <button onClick={onClose} className="text-gray-500 hover:text-white">✕</button>
             </div>
 
             <div className="space-y-3">
