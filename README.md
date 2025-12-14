@@ -1,0 +1,123 @@
+# Unified Stream Hub 🎥
+
+A robust multi-platform dashboard for live streamers. Monitor chat, activity feeds (follows, subs, gifts), and send messages across **Twitch**, **Kick**, **YouTube**, and **TikTok** from a single interface.
+
+![Dashboard Preview](https://via.placeholder.com/800x450?text=Unified+Stream+Hub+Dashboard)
+
+## Features
+
+-   **Unified Chat**: View and scroll through chat messages from all connected platforms in one feed.
+-   **Activity Feed**: Real-time updates for follows, subscriptions, tips, and gifts.
+-   **Multi-Platform Support**:
+    -   **Twitch**: OAuth integration, chat (read/write), subs/follows.
+    -   **Kick**: OAuth + PKCE integration, chat (read/write via v1 API), subs/follows.
+    -   **YouTube**: OAuth integration, Live Chat (read/write via polling).
+    -   **TikTok**: Connect via Username (read-only), optimized for low latency (500ms), supports Gifts/Likes/Chat.
+-   **Secure**: Runs on HTTPS with self-signed certificates (development mode).
+-   **Responsive UI**: Modern, dark-themed dashboard built with React and Tailwind CSS.
+
+## Prerequisites
+
+-   **Node.js** (v18 or higher recommended)
+-   **npm** or **yarn**
+-   Developer accounts for Twitch, Kick, and Google (YouTube) to obtain API credentials.
+
+## Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/yourusername/multi-stream-dashboard.git
+    cd multi-stream-dashboard
+    ```
+
+2.  **Install dependencies:**
+    This project has two parts: `client` and `server`.
+
+    ```bash
+    # Install Server Dependencies
+    cd server
+    npm install
+
+    # Install Client Dependencies
+    cd ../client
+    npm install
+    ```
+
+## Configuration
+
+1.  **Set up Environment Variables:**
+    Create a `.env` file in the `server/` directory based on `.env.example`.
+
+    ```bash
+    cp server/.env.example server/.env
+    ```
+
+2.  **Fill in your Credentials:**
+    Edit `server/.env` and add your keys:
+
+    **Twitch:**
+    -   `TWITCH_CLIENT_ID` & `TWITCH_CLIENT_SECRET`: Get from [Twitch Dev Console](https://dev.twitch.tv/console).
+    -   Redirect URI: `https://localhost:3001/api/auth/twitch/callback`
+
+    **Kick:**
+    -   `KICK_CLIENT_ID` & `KICK_CLIENT_SECRET`: Get from [Kick Developer Portal](https://developers.kick.com/).
+    -   Redirect URI: `https://localhost:3001/api/auth/kick/callback`
+
+    **YouTube:**
+    -   `YOUTUBE_CLIENT_ID` & `YOUTUBE_CLIENT_SECRET`: Get from [Google Cloud Console](https://console.cloud.google.com/).
+    -   Enable **YouTube Data API v3**.
+    -   Redirect URI: `https://localhost:3001/api/auth/youtube/callback`
+
+    **TikTok:**
+    -   No tokens required. Just your username.
+
+## Running the Application
+
+You need to run both the server and the client.
+
+1.  **Start the Server:**
+    ```bash
+    cd server
+    npm start
+    ```
+    *Note: The server runs on `https://localhost:3001`.*
+
+2.  **Start the Client:**
+    Open a new terminal:
+    ```bash
+    cd client
+    npm run dev
+    ```
+    *Note: The client runs on `http://localhost:5173`.*
+
+## Usage Guide
+
+1.  **Access the Dashboard:**
+    Open your browser to `http://localhost:5173`.
+
+2.  **Initial Connection:**
+    -   When you first load the app, a **Login Modal** will appear.
+    -   Click "Connect" for the platforms you want to use.
+    -   For **TikTok**, enter your username (e.g., `fabianappr`) and click Connect.
+
+3.  **Authentication & Security:**
+    -   Since the server uses a self-signed HTTPS certificate, you might see a browser warning on your first login or API call.
+    -   **Fix:** Go to `https://localhost:3001` in your browser and click "Advanced" -> "Proceed to localhost (unsafe)" to accept the certificate.
+
+4.  **Managing Connections:**
+    -   Click the **Gear Icon** (bottom left) to open the **Connection Manager**.
+    -   You can verify connection status (Green = Connected/Linked) or disconnect platforms here.
+
+5.  **Streaming:**
+    -   **Chat**: Type in the input box to send messages to all connected write-supported platforms (Twitch, Kick, YouTube).
+    -   **Activity**: Watch the right-hand panel for real-time events.
+
+## Troubleshooting
+
+-   **"Failed to fetch" Error**: usually means the browser rejected the self-signed certificate. Visit `https://localhost:3001` to accept it.
+-   **TikTok Messages Slow**: We have optimized polling to 500ms. If it feels slow, ensure your server terminal isn't throttled.
+-   **YouTube Chat Not Working**: You must be **LIVE** or have an active broadcast for YouTube to create a chat ID. Offline channels return an error.
+
+## License
+
+MIT
