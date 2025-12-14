@@ -1,6 +1,6 @@
 {
   "name": "stream-dashboard-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Unified Stream Dashboard Backend",
   "main": "index.js",
   "scripts": {

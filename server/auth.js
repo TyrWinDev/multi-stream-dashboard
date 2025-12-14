@@ -24,7 +24,7 @@ const getTokens = (platform) => tokens[platform];
 // --- Twitch OAuth ---
 const TWITCH_AUTH_URL = 'https://id.twitch.tv/oauth2/authorize';
 const TWITCH_TOKEN_URL = 'https://id.twitch.tv/oauth2/token';
-const TWITCH_SCOPES = 'chat:read chat:edit channel:read:subscriptions';
+const TWITCH_SCOPES = 'chat:read chat:edit channel:read:subscriptions channel:manage:broadcast';
 
 const startTwitchAuth = (res) => {
     const params = new URLSearchParams({

@@ -3,7 +3,9 @@ import { io } from 'socket.io-client';
 import { MessageSquare, Gift, Heart, UserPlus, Zap } from 'lucide-react';
 import DebugPanel from './components/DebugPanel';
 import ChatInput from './components/ChatInput';
+import LoginModal from './components/LoginModal';
 import SettingsPanel from './components/SettingsPanel';
+import MetadataPanel from './components/MetadataPanel';
 
 const SOCKET_URL = 'https://localhost:3001';
 
@@ -15,10 +17,9 @@ const PlatformIcon = ({ platform }) => {
         kick: 'text-green-500',
         streamelements: 'text-blue-400'
     };
-    return <span className={`font-bold uppercase text-xs ${colors[platform] || 'text-gray-400'} mr-2`}>{platform.slice(0, 2)}</span>;
+    return <span className={`font - bold uppercase text - xs ${colors[platform] || 'text-gray-400'} mr - 2`}>{platform.slice(0, 2)}</span>;
 };
 
-import LoginModal from './components/LoginModal';
 
 function App() {
     const [messages, setMessages] = useState([]);
@@ -223,6 +224,7 @@ function App() {
 
             <DebugPanel onSimulate={handleSimulation} />
             <SettingsPanel authStatus={authStatus} />
+            <MetadataPanel authStatus={authStatus} />
 
             {/* ... (rest of render) ... */}
             {/* Left Column: Chat */}

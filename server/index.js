@@ -436,17 +436,88 @@ app.get('/api/auth/tiktok', (req, res) => {
     res.redirect(`${CLIENT_URL}?auth=tiktok_success`);
 });
 
-app.post('/api/auth/tiktok/disconnect', (req, res) => {
-    if (tiktokConnection) {
-        tiktokConnection.disconnect();
-        tiktokConnection = null;
+const { updateTwitchMetadata, searchTwitchGame, updateYoutubeMetadata } = require('./metadata');
+
+// ... (previous routes) ...
+
+// --- API: Stream Metadata ---
+app.post('/api/stream/metadata', async (req, res) => {
+    const { title, twitchGameId, platforms } = req.body;
+    const results = {};
+
+    // Parallel execution
+    const promises = [];
+
+    // Valid platforms array check
+    const targets = Array.isArray(platforms) ? platforms : ['twitch', 'youtube', 'kick'];
+
+    // Twitch
+    if (targets.includes('twitch') && getTokens('twitch')) {
+        promises.push(
+            updateTwitchMetadata(title, twitchGameId)
+                .then(() => results.twitch = 'Success')
+                .catch(e => {
+                    console.error("Twitch Update Error:", e.response?.data || e.message);
+                    results.twitch = e.response?.status === 401 ? 'Auth Error (Reconnect)' : 'Failed';
+                })
+        );
     }
 
-    // Remove from tokens
-    setToken('tiktok', null); // Or undefined, handled by saveTokens? requires check
+    // YouTube (Only Title for now)
+    if (targets.includes('youtube') && getTokens('youtube')) {
+        promises.push(
+            updateYoutubeMetadata(title)
+                .then(res => results.youtube = res ? 'Success' : 'No Active Stream')
+                .catch(e => {
+                    console.error("YouTube Update Error:", e.message);
+                    results.youtube = 'Failed';
+                })
+        );
+    }
 
+    // Kick (Placeholder)
+    // promises.push(...)
+
+    await Promise.all(promises);
+    res.json(results);
+});
+
+// --- API: Game Search (Proxy to Twitch) ---
+app.get('/api/stream/search-game', async (req, res) => {
+    const { query } = req.query;
+    if (!query) return res.json([]);
+    try {
+        const games = await searchTwitchGame(query);
+        res.json(games);
+    } catch (e) {
+        console.error("Game Search Error:", e.message);
+        res.status(500).json({ error: "Search failed" });
+    }
+});
+
+// --- API: Disconnect Platform ---
+app.post('/api/auth/:platform/disconnect', (req, res) => {
+    const { platform } = req.params;
+
+    if (platform === 'tiktok') {
+        if (tiktokConnection) {
+            tiktokConnection.disconnect();
+            tiktokConnection = null;
+        }
+    }
+
+    setToken(platform, null);
+    console.log(`[Auth] Disconnected ${platform}`);
     res.json({ success: true });
 });
+
+// --- API: Game Search (Proxy to Twitch) ---
+
+// --- API: TikTok Auth (Redirect Flow) ---
+// (Already defined above)
+
+// --- API: TikTok Auth (Redirect Flow) ---
+// (Already defined above)
 
 // 4. StreamElements
 if (process.env.STREAMELEMENTS_JWT) {
