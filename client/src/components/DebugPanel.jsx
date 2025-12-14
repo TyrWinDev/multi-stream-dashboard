@@ -84,6 +84,12 @@ const DebugPanel = ({ onSimulate }) => {
                         Simulate Kick Msg
                     </button>
                     <button
+                        onClick={() => onSimulate('chat', { platform: 'twitch', user: 'EmoteFan', text: 'Kappa Keepo PogChamp', color: '#a020f0', emotes: { '25': ['0-4'], '1902': ['6-10'] } })}
+                        className="w-full p-2 bg-purple-900/30 text-purple-400 border border-purple-900 rounded hover:bg-purple-900/50 text-sm transition text-left px-3"
+                    >
+                        Simulate Emote Msg
+                    </button>
+                    <button
                         onClick={() => onSimulate('chat', { platform: 'youtube', user: 'YTFan', text: 'Hello from YouTube!', color: '#ff0000' })}
                         className="w-full p-2 bg-red-900/30 text-red-400 border border-red-900 rounded hover:bg-red-900/50 text-sm transition text-left px-3"
                     >
