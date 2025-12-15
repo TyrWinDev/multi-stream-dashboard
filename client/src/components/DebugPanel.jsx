@@ -63,23 +63,7 @@ const DebugPanel = ({ onSimulate, isOpen, onClose }) => {
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <p className="text-xs text-gray-500 uppercase font-semibold">Activity Theme</p>
-                    <div className="flex space-x-2">
-                        <button
-                            onClick={() => onSimulate('theme', 'minimal')}
-                            className="flex-1 p-2 bg-gray-800 text-gray-300 border border-gray-600 rounded hover:bg-gray-700 text-xs transition"
-                        >
-                            Minimal
-                        </button>
-                        <button
-                            onClick={() => onSimulate('theme', 'colorful')}
-                            className="flex-1 p-2 bg-gradient-to-r from-blue-900/50 to-purple-900/50 text-blue-200 border border-blue-800 rounded hover:opacity-80 text-xs transition"
-                        >
-                            Colorful
-                        </button>
-                    </div>
-                </div>
+
 
                 <div className="space-y-2">
                     <p className="text-xs text-gray-500 uppercase font-semibold">Chat</p>

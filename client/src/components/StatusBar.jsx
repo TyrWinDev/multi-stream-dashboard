@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Settings, Bug } from 'lucide-react';
+import { Github, Settings, Bug, Coffee } from 'lucide-react';
 
 const StatusBar = ({ onOpenSettings, onOpenDebug }) => {
     return (
@@ -15,6 +15,15 @@ const StatusBar = ({ onOpenSettings, onOpenDebug }) => {
                 >
                     <Github className="w-4 h-4 mr-1.5" />
                     GitHub
+                </a>
+                <a
+                    href="https://ko-fi.com/tyrwinter"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center hover:text-[#FF5E5B] transition-colors"
+                >
+                    <Coffee className="w-4 h-4 mr-1.5" />
+                    Donate
                 </a>
             </div>
 

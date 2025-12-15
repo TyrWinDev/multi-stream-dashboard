@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Search, RefreshCw, Gamepad2, Type, ChevronDown, ChevronUp } from 'lucide-react';
+import { Save, Search, RefreshCw, Gamepad2, Type, ChevronDown, ChevronUp, Settings2 } from 'lucide-react';
 
 const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
     const [title, setTitle] = useState('');
@@ -74,24 +74,22 @@ const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
     const togglePlatform = (p) => setSelectedPlatforms(prev => ({ ...prev, [p]: !prev[p] }));
 
     return (
-        <div className={`flex flex-col bg-[#1a1a1a] border-t border-gray-800 transition-all duration-300 ${isExpanded ? 'h-[50%]' : 'h-14'}`}>
+        <div className={`flex flex-col border-t border-border bg-tertiary transition-all duration-300 ${isExpanded ? 'h-auto' : 'h-12'}`}>
             {/* Header / Toggle Bar */}
             <div
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-800/50 transition-colors"
+                className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
                 onClick={onToggleExpand}
             >
                 <div className="flex items-center">
-                    <RefreshCw className="w-5 h-5 mr-2 text-indigo-400" />
-                    <h2 className="font-bold text-lg text-white">Stream Manager</h2>
+                    <Settings2 className="w-5 h-5 mr-2 text-accent" />
+                    <h2 className="font-bold text-lg text-main">Stream Manager</h2>
                 </div>
-                <button className="text-gray-400 hover:text-white">
-                    {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                </button>
+                {isExpanded ? <ChevronDown className="w-5 h-5 text-muted" /> : <ChevronUp className="w-5 h-5 text-muted" />}
             </div>
 
             {/* Content (Hidden when collapsed) */}
             {isExpanded && (
-                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                <div className="p-4 space-y-4 border-t border-border animate-fade-in">
 
                     {/* Platform Toggles */}
                     <div className="flex flex-wrap gap-2">
@@ -109,7 +107,7 @@ const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
                                     disabled={!isConnected}
                                     className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors flex items-center capitalize ${selectedPlatforms[p]
                                         ? activeClass
-                                        : 'bg-[#0f0f0f] border-gray-700 text-gray-500'
+                                        : 'bg-primary border-border text-muted'
                                         } ${!isConnected ? 'opacity-50 cursor-not-allowed' : 'hover:border-gray-500'}`}
                                 >
                                     {selectedPlatforms[p] && <span className="mr-1.5 text-white">✓</span>}

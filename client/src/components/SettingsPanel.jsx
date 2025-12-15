@@ -1,7 +1,7 @@
 import React from 'react';
 import { Settings, Lock, X } from 'lucide-react';
 
-const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggleAlerts }) => {
+const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggleAlerts, currentTheme, onSetTheme }) => {
     // Click Outside Handler
     const panelRef = React.useRef(null);
     React.useEffect(() => {
@@ -120,6 +120,27 @@ const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggle
             </div>
 
             <div className="space-y-4">
+                {/* Theme Selector */}
+                <div className="space-y-2">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Appearance</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        {['default', 'cyberpunk', 'soft', 'contrast'].map(t => (
+                            <button
+                                key={t}
+                                onClick={() => onSetTheme(t)}
+                                className={`
+                                    px-3 py-2 rounded text-xs font-bold capitalize transition-all border
+                                    ${currentTheme === t
+                                        ? 'bg-accent text-white border-accent shadow-sm'
+                                        : 'bg-black/20 text-muted border-border hover:bg-black/40 hover:text-white'}
+                                `}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Global Settings */}
                 <div className="p-3 bg-black/20 rounded border border-gray-700">
                     <label className="flex items-center justify-between cursor-pointer group">
