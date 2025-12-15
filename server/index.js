@@ -594,6 +594,16 @@ if (process.env.STREAMELEMENTS_JWT) {
             console.log('Frontend connected');
             socket.emit('history', chatHistory);
 
+            // SIMULATION HANDLER
+            socket.on('simulate-event', ({ type, data }) => {
+                console.log(`[SIMULATION] ${type} from client`);
+                if (type === 'chat') {
+                    normalizeMsg(data.platform, data.user, data.text, data.color);
+                } else if (type === 'activity') {
+                    emitActivity(data.type, data.platform, data.user, data.details);
+                }
+            });
+
             // Handle sending messages
             socket.on('send-message', async ({ platform, text }) => {
                 console.log(`Sending to ${platform}: ${text}`);
