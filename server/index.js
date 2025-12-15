@@ -597,9 +597,9 @@ if (process.env.STREAMELEMENTS_JWT) {
             // SIMULATION HANDLER
             socket.on('simulate-event', ({ type, data }) => {
                 console.log(`[SIMULATION] ${type} from client`);
-                if (type === 'chat') {
+                if (type === 'chat' && data) {
                     normalizeMsg(data.platform, data.user, data.text, data.color);
-                } else if (type === 'activity') {
+                } else if (type === 'activity' && data) {
                     emitActivity(data.type, data.platform, data.user, data.details);
                 }
             });

@@ -1,17 +1,102 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Copy, Heart, UserPlus, Gift, Zap, Star, Settings2 } from 'lucide-react';
+import { Copy, Heart, UserPlus, Gift, Zap, Star, Settings2, DollarSign } from 'lucide-react';
+import SourceCustomizerModal from './SourceCustomizerModal';
 
-const ActivityDock = ({ activities, getActivityStyle }) => {
+const ActivityDock = ({ activities, previewConfig }) => {
     const [searchParams] = useSearchParams();
-    const isTransparent = searchParams.get('transparent') === 'true';
+    const [showSettings, setShowSettings] = useState(false);
+
+    // Resolve Config
+    const config = previewConfig ? {
+        ...previewConfig,
+        colorMode: previewConfig.activityColorMode || previewConfig.colorMode || 'simple'
+    } : {
+        font: searchParams.get('font') || 'inter',
+        size: parseInt(searchParams.get('size') || '14'),
+        bgColor: searchParams.get('bg_color') || '#000000',
+        bgOpacity: parseInt(searchParams.get('bg_opacity') || '50'),
+        badges: searchParams.get('badges') !== 'false',
+        animation: searchParams.get('animation') || 'fade',
+        orientation: searchParams.get('orientation') || 'vertical',
+        isTransparent: searchParams.get('transparent') === 'true',
+        colorMode: searchParams.get('color_mode') || 'simple',
+        eventColors: {
+            follow: searchParams.get('col_follow') || '#e91e63',
+            sub: searchParams.get('col_sub') || '#9c27b0',
+            tip: searchParams.get('col_tip') || '#4caf50',
+            gift: searchParams.get('col_gift') || '#2196f3',
+        }
+    };
+
+    // Helper for base background (used in simple mode)
+    const getBaseColor = () => {
+        if (config.bgColor) {
+            const hex = config.bgColor.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${config.bgOpacity / 100})`;
+        }
+        return 'rgba(0,0,0,0.5)';
+    };
+
+    // Get color for specific event based on mode
+    const getEventStyle = (type) => {
+        let bg = getBaseColor();
+
+        if (config.colorMode === 'colorful') {
+            // Default "Colorful" Palette with user opacity
+            const opacity = config.bgOpacity / 100;
+            switch (type) {
+                case 'follow': bg = `rgba(233, 30, 99, ${opacity})`; break; // pink
+                case 'sub': bg = `rgba(156, 39, 176, ${opacity})`; break; // purple
+                case 'tip': bg = `rgba(76, 175, 80, ${opacity})`; break; // green
+                case 'gift': bg = `rgba(33, 150, 243, ${opacity})`; break; // blue
+                default: break;
+            }
+        } else if (config.colorMode === 'custom') {
+            const hex = config.eventColors[type] || config.bgColor;
+            const cleanHex = hex.replace('#', '');
+            const r = parseInt(cleanHex.substring(0, 2), 16);
+            const g = parseInt(cleanHex.substring(2, 4), 16);
+            const b = parseInt(cleanHex.substring(4, 6), 16);
+            bg = `rgba(${r}, ${g}, ${b}, ${config.bgOpacity / 100})`;
+        }
+
+        return {
+            backgroundColor: bg,
+            backdropFilter: 'blur(4px)',
+        };
+    };
+
     const isPopout = searchParams.get('popout') === 'true';
 
-    // Auto-scroll logic
+    // Font Mapping
+    const getFontFamily = (f) => {
+        switch (f) {
+            case 'roboto': return '"Roboto", sans-serif';
+            case 'mono': return 'monospace';
+            case 'pixel': return '"Press Start 2P", cursive';
+            case 'comic': return '"Comic Sans MS", cursive';
+            default: return '"Inter", sans-serif';
+        }
+    };
+
+    const containerStyles = {
+        fontFamily: getFontFamily(config.font),
+        fontSize: `${config.size}px`,
+        // Container is transparent now, individual events carry the bg
+        backgroundColor: 'transparent',
+    };
+
+    // Auto-scroll (for vertical only)
     const endRef = React.useRef(null);
     useEffect(() => {
-        endRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [activities]);
+        if (config.orientation === 'vertical') {
+            endRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [activities, config.orientation]);
 
     const copyUrl = () => {
         const url = `${window.location.origin}/activity?transparent=true`;
@@ -20,12 +105,20 @@ const ActivityDock = ({ activities, getActivityStyle }) => {
     };
 
     return (
-        <div className={`flex flex-col h-full overflow-hidden ${isTransparent ? 'bg-transparent' : 'bg-[#0f0f0f]'}`}>
-            {!isTransparent && (
-                <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-secondary">
+        <div
+            className={`flex ${config.orientation === 'vertical' ? 'flex-col h-full overflow-hidden' : 'flex-row items-center h-full overflow-hidden w-full'}`}
+            style={containerStyles}
+        >
+            {/* Header (Hidden if transparent/preview) */}
+            {!config.isTransparent && !previewConfig && (
+                <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-secondary shrink-0 w-full">
                     <h2 className="font-bold text-main">Activity Feed</h2>
                     <div className="flex items-center space-x-2">
-                        <button className="text-muted hover:text-accent transition-colors" title="Dock Settings">
+                        <button
+                            onClick={() => setShowSettings(true)}
+                            className="text-muted hover:text-accent transition-colors"
+                            title="Dock Settings"
+                        >
                             <Settings2 className="w-4 h-4" />
                         </button>
                         {!isPopout && (
@@ -37,55 +130,90 @@ const ActivityDock = ({ activities, getActivityStyle }) => {
                 </div>
             )}
 
-            <div className={`flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-800 ${isTransparent ? 'scrollbar-none' : ''}`}>
+            {/* Activity List */}
+            <div
+                className={`
+                    ${config.orientation === 'vertical'
+                        ? 'flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-800 w-full flex flex-col items-start'
+                        : 'flex items-center space-x-4 px-4 animate-scroll-left whitespace-nowrap'} 
+                `}
+            >
                 {activities.length === 0 ? (
-                    <div className="text-center text-muted mt-10 italic">
+                    <div className="text-center opacity-50 italic w-full">
                         No recent activity...
                     </div>
                 ) : (
-                    activities.map((act) => (
-                        <div
-                            key={act.id}
-                            className={`
-                                relative overflow-hidden rounded-lg p-3 border border-white/5 transition-all duration-300 hover:bg-white/5
-                                ${getActivityStyle ? getActivityStyle(act.type) : 'bg-tertiary'}
-                            `}
-                        >
-                            {/* Platform Stripe */}
-                            <div className={`absolute top-0 left-0 w-1 h-full 
-                                ${act.platform === 'twitch' ? 'bg-[#9146FF]' :
-                                    act.platform === 'youtube' ? 'bg-[#FF0000]' :
-                                        act.platform === 'kick' ? 'bg-[#53FC18]' : 'bg-[#ff0050]'
-                                }
-                            `}></div>
+                    activities.map((act) => {
+                        // Icons based on type
+                        let Icon = Heart;
+                        let colorClass = "text-white"; // default white for colorful bgs
 
-                            <div className="flex items-center pl-3">
-                                <div className="p-2 rounded-full bg-black/30 mr-3">
-                                    {act.type === 'follow' && <UserPlus className="w-5 h-5 text-blue-400" />}
-                                    {act.type === 'sub' && <Heart className="w-5 h-5 text-purple-400" />}
-                                    {act.type === 'tip' && <Zap className="w-5 h-5 text-yellow-400" />}
-                                    {act.type === 'gift' && <Gift className="w-5 h-5 text-pink-400" />}
-                                    {!['follow', 'sub', 'tip', 'gift'].includes(act.type) && <Star className="w-5 h-5 text-white" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-baseline justify-between">
-                                        <span className="font-bold text-white truncate text-sm">{act.user}</span>
-                                        <span className="text-[10px] uppercase font-bold tracking-wider opacity-60 ml-2">
-                                            {act.type}
-                                        </span>
+                        // In simple mode, we might want colored icons? 
+                        // But for now, let's keep icons white if background is colored, or colored if background is dark?
+                        // Let's stick to standard behavior: Icon color matches type usually.
+                        // However, if the BACKGROUND is the type color, the icon should probably be white.
+
+                        const isColorful = config.colorMode !== 'simple';
+
+                        if (act.type === 'sub') { Icon = Star; }
+                        if (act.type === 'tip') { Icon = DollarSign; }
+                        if (act.type === 'gift') { Icon = Gift; }
+
+                        // If simple mode, use colored icons. If colorful/custom, use white icons (assuming bg is colored).
+                        if (!isColorful) {
+                            if (act.type === 'sub') colorClass = "text-purple-400";
+                            else if (act.type === 'tip') colorClass = "text-green-400";
+                            else if (act.type === 'gift') colorClass = "text-blue-400";
+                            else colorClass = "text-pink-400";
+                        }
+
+                        // Animations
+                        const animClass = config.animation === 'slide' ? 'animate-slide-in-right' :
+                            config.animation === 'none' ? '' : 'animate-fade-in';
+
+                        return (
+                            <div
+                                key={act.id}
+                                className={`${animClass} relative flex items-center rounded-lg p-2 shrink-0 border border-white/5 shadow-sm transition-all hover:scale-[1.02]`}
+                                style={getEventStyle(act.type)}
+                            >
+                                {/* Icon Badge */}
+                                {config.badges && (
+                                    <div className={`p-1.5 rounded-full bg-black/20 mr-3 ${colorClass}`}>
+                                        <Icon className="w-4 h-4" />
                                     </div>
-                                    {act.details && (
-                                        <div className="text-xs text-gray-400 mt-0.5 truncate">
-                                            {act.details}
-                                        </div>
-                                    )}
+                                )}
+
+                                <div className="leading-tight pr-2">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="font-bold text-white tracking-wide shadow-black drop-shadow-sm">{act.user}</span>
+
+                                        {config.badges && ( // Platform Icon small
+                                            <span className="text-[10px] uppercase text-white/50 bg-black/30 px-1 rounded backdrop-blur-[2px]">
+                                                {act.platform.slice(0, 2)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-[0.9em] text-white/80 font-medium">
+                                        <span className="capitalize">{act.type}</span>
+                                        {act.details && <span className="text-white ml-1 font-bold">{act.details}</span>}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
-                <div ref={endRef} />
+                {config.orientation === 'vertical' && <div ref={endRef} />}
             </div>
+
+            {/* Customizer Modal (Only for standalone Dock) */}
+            {!previewConfig && (
+                <SourceCustomizerModal
+                    isOpen={showSettings}
+                    onClose={() => setShowSettings(false)}
+                    type="activity"
+                />
+            )}
         </div>
     );
 };
