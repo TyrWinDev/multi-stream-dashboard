@@ -15,6 +15,8 @@ A robust multi-platform dashboard for live streamers. Monitor chat, activity fee
     -   **TikTok**: Connect via Username (read-only), optimized for low latency (500ms), supports Gifts/Likes/Chat.
 -   **Secure**: Runs on HTTPS with self-signed certificates (development mode).
 -   **Responsive UI**: Modern, dark-themed dashboard built with React and Tailwind CSS.
+-   **Custom Themes**: Choose from Cyberpunk, Soft Dark, High Contrast, or Default styles.
+-   **Event Animations**: Built-in alerts for follows/subs with confetti and sound effects.
 
 ## Prerequisites
 

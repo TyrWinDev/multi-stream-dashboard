@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-12-15
+
+### Added
+- **Dynamic Theming**: Added a full theme engine with 4 presets: **Default**, **Cyberpunk** (Neon), **Soft Dark** (Slate), and **High Contrast**.
+- **Appearance Settings**: New section in Settings Panel to switch themes instantly (persists via LocalStorage).
+- **Mention Highlights**: Mentions are now detected across ALL platforms (Twitch, Kick, YouTube, TikTok) and highlighted with the active theme's accent color.
+- **Ko-fi Integration**: Added a "Donate" button to the status bar for support.
+- **Settings2 Icon**: Added missing icon to Stream Manager.
+
+### Changed
+- **Activity Feed**: Restored platform-specific branding (Blue/Purple/Yellow/Pink) for events while maintaining theme compatibility.
+- **Stream Manager**: Completely refactored to use semantic theme colors (backgrounds, borders, inputs) instead of hardcoded dark hues.
+- **Simulation Panel**: Removed legacy theme buttons that caused conflicts.
+
 ## [1.1.0] - 2025-12-14
 
 ### Added
