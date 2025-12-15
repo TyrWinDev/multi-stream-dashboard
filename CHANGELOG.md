@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - **UI Polish**:
   - **Brand Colors**: Platform buttons in Chat and Stream Manager now use brand-specific colors (Purple/Green/Red).
   - **Dynamic Update Button**: "Update" button text adapts to selected platforms (e.g., "Update Twitch & Kick").
+- **Event Animations**: Added Confetti explosions and sliding Alert Banners for Follows, Subs, and Tips.
+- **Alert Controls**: Added a "Enable Event Alerts" toggle in Settings to globally mute animations.
 - **Kick Metadata**: Implemented automated Category search (by name) and channel updates (Title & Category) using Kick Public API v1.
 - **Twitch Auth**: Fixed issue where bot connected anonymously; now fetches username before joining.
 
