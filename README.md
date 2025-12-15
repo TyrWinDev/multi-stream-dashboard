@@ -100,7 +100,7 @@ You need to run both the server and the client.
 2.  **Initial Connection:**
     -   When you first load the app, a **Login Modal** will appear.
     -   Click "Connect" for the platforms you want to use.
-    -   For **TikTok**, enter your username (e.g., `fabianappr`) and click Connect.
+    -   For **TikTok**, enter your username (e.g., `your_username`) and click Connect.
 
 3.  **Authentication & Security:**
     -   Since the server uses a self-signed HTTPS certificate, you might see a browser warning on your first login or API call.
