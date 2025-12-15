@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 ## [1.1.0] - 2025-12-14
 
 ### Added
+- **Unified Chat Reply**: Users can now reply to chat messages across platforms (Twitch, Kick, YouTube) by hovering over a message and clicking the reply arrow.
+- **Mention Highlighting**: Messages mentioning the specific user are now highlighted in yellow, bold, and italic for better visibility.
+- **Twitch Auth Logic**: Improved `initTwitch` to fetch the authenticated username from the API, resolving anonymous connection issues.
+
+### Changed
 - **Stream Manager**: Integrated directly into the main layout (right column footer). Replaced floating `MetadataPanel`.
 - **Status Bar**: Fixed footer bar for global controls (Simulation, Connections) and copyright info.
 - **Settings & Debug**: Refactored to be controlled modals managed by `App.jsx`, removing floating toggle buttons.

@@ -195,13 +195,31 @@ const initTwitch = async () => {
         return;
     }
 
-    console.log("Twitch: Initializing with OAuth Token");
+    console.log("Twitch: Initializing...");
+
+    // Fetch username from API to ensure we have the correct identity
+    let username = process.env.TWITCH_USERNAME || 'justinfan123';
+    try {
+        const resp = await axios.get('https://api.twitch.tv/helix/users', {
+            headers: {
+                'Authorization': `Bearer ${tokens.accessToken}`,
+                'Client-Id': process.env.TWITCH_CLIENT_ID
+            }
+        });
+        if (resp.data.data?.[0]) {
+            username = resp.data.data[0].login; // Use login name (lowercase)
+            console.log(`Twitch: Authenticated as ${username}`);
+            // Update token with username if needed or just use it here
+        }
+    } catch (e) {
+        console.warn("Twitch: Failed to fetch username from token, defaulting to env/anon:", e.message);
+    }
 
     const opts = {
         options: { debug: true, messagesLogLevel: "info" },
         connection: { reconnect: true, secure: true },
         identity: {
-            username: process.env.TWITCH_USERNAME || 'justinfan123', // User should really have this in env or we fetch it
+            username: username,
             password: `oauth:${tokens.accessToken}`
         },
         channels: channels

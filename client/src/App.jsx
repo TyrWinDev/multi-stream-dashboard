@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { MessageSquare, Gift, Heart, UserPlus, Zap } from 'lucide-react';
+import { MessageSquare, Gift, Heart, UserPlus, Zap, Reply } from 'lucide-react';
 import DebugPanel from './components/DebugPanel';
 import ChatInput from './components/ChatInput';
 import LoginModal from './components/LoginModal';
@@ -36,6 +36,7 @@ function App() {
     const [isManagerExpanded, setIsManagerExpanded] = useState(true);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isDebugOpen, setIsDebugOpen] = useState(false);
+    const [replyingTo, setReplyingTo] = useState(null);
 
     const chatEndRef = useRef(null);
     const activityEndRef = useRef(null);
@@ -64,6 +65,10 @@ function App() {
         const username = rawUsername.replace('@', '');
         // Use redirect to ensure cert acceptance
         window.location.assign(`https://localhost:3001/api/auth/tiktok?username=${username}`);
+    };
+
+    const handleReply = (msg) => {
+        setReplyingTo({ user: msg.user, platform: msg.platform });
     };
 
 
@@ -244,29 +249,53 @@ function App() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {messages.map((msg, idx) => (
-                            <div key={msg.id || idx} className="group flex items-start animate-slide-in">
-                                {msg.avatar && (
-                                    <img src={msg.avatar} alt={msg.user} className="w-8 h-8 rounded-full mr-3 mt-1 bg-gray-700" />
-                                )}
+                        {messages.map((msg, idx) => {
+                            const isTwitchMention = authStatus.twitch?.username && msg.text.toLowerCase().includes(`@${authStatus.twitch.username.toLowerCase()}`);
+                            const isKickMention = authStatus.kick?.username && msg.text.toLowerCase().includes(`@${authStatus.kick.username.toLowerCase()}`);
+                            const isSelf = msg.user === (authStatus[msg.platform]?.username || 'Me');
 
-                                <div className="flex-1">
-                                    <div className="flex items-baseline">
-                                        <PlatformIcon platform={msg.platform} />
-                                        <span className="font-bold mr-2 text-sm" style={{ color: msg.color }}>{msg.user}</span>
-                                        <span className="text-xs text-gray-500 ml-auto">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                            const isMention = !isSelf && (isTwitchMention || isKickMention);
+
+                            return (
+                                <div
+                                    key={msg.id || idx}
+                                    className={`group flex items-start animate-slide-in relative ${isMention ? 'bg-yellow-500/10 -mx-2 px-2 py-1 border-l-2 border-yellow-500 rounded-r' : ''}`}
+                                >
+                                    {msg.avatar && (
+                                        <img src={msg.avatar} alt={msg.user} className="w-8 h-8 rounded-full mr-3 mt-1 bg-gray-700" />
+                                    )}
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-baseline mb-0.5">
+                                            <PlatformIcon platform={msg.platform} />
+                                            <span className="font-bold mr-2 text-sm truncate" style={{ color: msg.color }}>{msg.user}</span>
+                                            <span className="text-xs text-gray-500 ml-auto flex-shrink-0">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                                        </div>
+                                        <div className={`text-sm leading-relaxed break-words ${isMention ? 'text-yellow-100 font-bold italic' : 'text-gray-300'}`}>
+                                            {msg.platform === 'twitch' ? renderMessageText(msg) : msg.text}
+                                        </div>
                                     </div>
-                                    <div className="text-gray-300 text-sm leading-relaxed break-words">
-                                        {msg.platform === 'twitch' ? renderMessageText(msg) : msg.text}
-                                    </div>
+
+                                    {/* Reply Button (Hover) */}
+                                    <button
+                                        onClick={() => handleReply(msg)}
+                                        className="absolute right-2 top-2 p-1.5 bg-gray-700/80 rounded-md text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600 hover:text-white"
+                                        title="Reply"
+                                    >
+                                        <Reply className="w-3 h-3" />
+                                    </button>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         <div ref={chatEndRef} />
                     </div>
 
                     {/* Chat Input */}
-                    <ChatInput onSend={sendMessage} />
+                    <ChatInput
+                        onSend={sendMessage}
+                        replyingTo={replyingTo}
+                        onCancelReply={() => setReplyingTo(null)}
+                    />
                 </div>
 
                 {/* Right Column: Activity Feed + Stream Manager */}
