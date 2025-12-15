@@ -57,6 +57,7 @@ const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
                 body: JSON.stringify({
                     title: title,
                     twitchGameId: selectedGame?.id,
+                    gameName: selectedGame?.name, // For Kick/YouTube auto-match
                     platforms: targets
                 })
             });
@@ -96,15 +97,20 @@ const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
                     <div className="flex flex-wrap gap-2">
                         {['twitch', 'youtube', 'kick'].map(p => {
                             const isConnected = authStatus[p]?.connected;
+                            let activeClass = 'bg-indigo-600 border-indigo-500 text-white';
+                            if (p === 'twitch') activeClass = 'bg-purple-600 border-purple-500 text-white';
+                            if (p === 'kick') activeClass = 'bg-green-600 border-green-500 text-white';
+                            if (p === 'youtube') activeClass = 'bg-red-600 border-red-500 text-white';
+
                             return (
                                 <button
                                     key={p}
                                     onClick={(e) => { e.stopPropagation(); isConnected && togglePlatform(p); }}
                                     disabled={!isConnected}
                                     className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors flex items-center capitalize ${selectedPlatforms[p]
-                                        ? 'bg-indigo-600 border-indigo-500 text-white'
+                                        ? activeClass
                                         : 'bg-[#0f0f0f] border-gray-700 text-gray-500'
-                                        } ${!isConnected ? 'opacity-50 cursor-not-allowed' : 'hover:border-indigo-400'}`}
+                                        } ${!isConnected ? 'opacity-50 cursor-not-allowed' : 'hover:border-gray-500'}`}
                                 >
                                     {selectedPlatforms[p] && <span className="mr-1.5 text-white">✓</span>}
                                     {p}
@@ -168,7 +174,17 @@ const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
                     <button
                         onClick={handleUpdate}
                         disabled={isUpdating || (!title && !selectedGame)}
-                        className={`w-full py-3 rounded-lg font-bold text-white flex items-center justify-center transition-all transform hover:scale-[1.02] ${isUpdating ? 'bg-indigo-900 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-indigo-500/20'
+                        className={`w-full py-3 rounded-lg font-bold text-white flex items-center justify-center transition-all transform hover:scale-[1.02] ${isUpdating ? 'bg-indigo-900 cursor-not-allowed' :
+                            // Dynamic Background Logic
+                            (() => {
+                                const active = Object.keys(selectedPlatforms).filter(k => selectedPlatforms[k]);
+                                if (active.length === 0) return 'bg-gray-700 hover:bg-gray-600';
+                                if (active.length === 1 && active[0] === 'twitch') return 'bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-purple-500/20';
+                                if (active.length === 1 && active[0] === 'kick') return 'bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-green-500/20';
+                                if (active.length === 1 && active[0] === 'youtube') return 'bg-red-600 hover:bg-red-700 shadow-lg hover:shadow-red-500/20';
+                                // Multi/All
+                                return 'bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-indigo-500/20';
+                            })()
                             }`}
                     >
                         {isUpdating ? (
@@ -177,7 +193,23 @@ const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
                             </>
                         ) : (
                             <>
-                                <Save className="w-5 h-5 mr-3" /> Update All Platforms
+                                <Save className="w-5 h-5 mr-3" />
+                                {(() => {
+                                    const activePlatforms = Object.keys(selectedPlatforms).filter(k => selectedPlatforms[k]);
+                                    const connectedPlatforms = Object.keys(authStatus).filter(k => authStatus[k]?.connected && ['twitch', 'youtube', 'kick'].includes(k));
+
+                                    // If ALL connected platforms are selected -> Update All Platforms
+                                    // Otherwise -> Update [Specifics]
+                                    if (activePlatforms.length > 0 && activePlatforms.length === connectedPlatforms.length) {
+                                        return "Update All Platforms";
+                                    }
+                                    if (activePlatforms.length > 0) {
+                                        // Capitalize first letter
+                                        const names = activePlatforms.map(p => p.charAt(0).toUpperCase() + p.slice(1));
+                                        return `Update ${names.join(' & ')}`;
+                                    }
+                                    return "Update Stream Info"; // Fallback if none selected
+                                })()}
                             </>
                         )}
                     </button>

@@ -493,8 +493,18 @@ app.post('/api/stream/metadata', async (req, res) => {
         );
     }
 
-    // Kick (Placeholder)
-    // promises.push(...)
+    // Kick
+    if (targets.includes('kick') && getTokens('kick')) {
+        // Use gameName for auto-match
+        promises.push(
+            require('./metadata').updateKickMetadata(title, req.body.gameName)
+                .then(() => results.kick = 'Success')
+                .catch(e => {
+                    console.error("Kick Update Error:", e.message);
+                    results.kick = 'Failed';
+                })
+        );
+    }
 
     await Promise.all(promises);
     res.json(results);

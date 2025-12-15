@@ -107,14 +107,66 @@ const updateYoutubeMetadata = async (title, categoryId) => {
     return true;
 };
 
-// --- Helper: Update Kick (Placeholder) ---
-const updateKickMetadata = async (title, categoryId) => {
-    // Kick API is private/undocumented for updates. 
-    // We would need to inspect network traffic to find the endpoint.
-    // Likely: POST https://kick.com/api/v2/channels/{slug}
-    // For now, we log it as "Not Implemented Safety".
-    console.log("[Kick] Metadata update not yet implemented (Private API barrier).");
-    return false;
+// --- Helper: Search Kick Category ---
+const searchKickCategory = async (query) => {
+    // Public API v1: GET /categories?q={query}
+    try {
+        const tokens = getTokens('kick');
+        if (!tokens || !tokens.accessToken) return [];
+
+        const res = await axios.get(`https://api.kick.com/public/v1/categories?q=${encodeURIComponent(query)}`, {
+            headers: { 'Authorization': `Bearer ${tokens.accessToken}` }
+        });
+
+        if (res.data && res.data.data) {
+            return res.data.data.map(c => ({ id: c.id, name: c.name, thumbnail: c.banner }));
+        }
+        return [];
+    } catch (e) {
+        console.error("[Kick] Category Search Error:", e.message);
+        return [];
+    }
+};
+
+// --- Helper: Update Kick ---
+const updateKickMetadata = async (title, gameName) => {
+    const tokens = getTokens('kick');
+    if (!tokens || !tokens.accessToken) throw new Error("Kick not connected");
+
+    // 1. Resolve Category ID from Game Name
+    let categoryId = null;
+    if (gameName) {
+        const categories = await searchKickCategory(gameName);
+        if (categories.length > 0) {
+            // Simple exact match or first result
+            const match = categories.find(c => c.name.toLowerCase() === gameName.toLowerCase()) || categories[0];
+            categoryId = match.id;
+            console.log(`[Kick] Resolved Game '${gameName}' to Category ID: ${categoryId} (${match.name})`);
+        } else {
+            console.warn(`[Kick] Could not find category for '${gameName}'`);
+        }
+    }
+
+    // 2. Update Channel
+    // Endpoint: PATCH https://api.kick.com/public/v1/channels (No ID in path, infers from token)
+    // Keys: stream_title, category_id
+    const body = {};
+    if (title) body.stream_title = title;
+    if (categoryId) body.category_id = categoryId;
+
+    try {
+        await axios.patch(`https://api.kick.com/public/v1/channels`, body, {
+            headers: {
+                'Authorization': `Bearer ${tokens.accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log(`[Kick] Updated Metadata: ${title} / CatID: ${categoryId}`);
+        return true;
+    } catch (e) {
+        console.error("[Kick] Update Failed:", e.response?.data?.message || e.message);
+        throw e;
+    }
 };
 
 

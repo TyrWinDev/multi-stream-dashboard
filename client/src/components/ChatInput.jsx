@@ -46,21 +46,21 @@ const ChatInput = ({ onSend, replyingTo, onCancelReply }) => {
                     <button
                         type="button"
                         onClick={() => setPlatform('all')}
-                        className={`px-3 py-1 rounded transition ${platform === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                        className={`px-3 py-1 rounded transition font-medium ${platform === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
                     >
                         All
                     </button>
                     <button
                         type="button"
                         onClick={() => setPlatform('twitch')}
-                        className={`px-3 py-1 rounded transition ${platform === 'twitch' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                        className={`px-3 py-1 rounded transition font-medium ${platform === 'twitch' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
                     >
                         Twitch
                     </button>
                     <button
                         type="button"
                         onClick={() => setPlatform('kick')}
-                        className={`px-3 py-1 rounded transition ${platform === 'kick' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                        className={`px-3 py-1 rounded transition font-medium ${platform === 'kick' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
                     >
                         Kick
                     </button>

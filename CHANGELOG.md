@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 ## [1.1.0] - 2025-12-14
 
 ### Added
-- **Unified Chat Reply**: Users can now reply to chat messages across platforms (Twitch, Kick, YouTube) by hovering over a message and clicking the reply arrow.
-- **Mention Highlighting**: Messages mentioning the specific user are now highlighted in yellow, bold, and italic for better visibility.
-- **Twitch Auth Logic**: Improved `initTwitch` to fetch the authenticated username from the API, resolving anonymous connection issues.
+- **Unified Chat Reply**: Added reply button, mention syntax, and reply context banner.
+- **Mention Highlighting**: Messages mentioning the user are now highlighted yellow with bold/italic text.
+- **UI Polish**:
+  - **Brand Colors**: Platform buttons in Chat and Stream Manager now use brand-specific colors (Purple/Green/Red).
+  - **Dynamic Update Button**: "Update" button text adapts to selected platforms (e.g., "Update Twitch & Kick").
+- **Kick Metadata**: Implemented automated Category search (by name) and channel updates (Title & Category) using Kick Public API v1.
+- **Twitch Auth**: Fixed issue where bot connected anonymously; now fetches username before joining.
 
 ### Changed
 - **Stream Manager**: Integrated directly into the main layout (right column footer). Replaced floating `MetadataPanel`.

@@ -101,7 +101,7 @@ const startKickAuth = (res) => {
         client_id: process.env.KICK_CLIENT_ID,
         redirect_uri: `https://localhost:${process.env.PORT || 3001}/api/auth/kick/callback`,
         response_type: 'code',
-        scope: 'user:read channel:read chat:write events:subscribe',
+        scope: 'user:read channel:read channel:write chat:write events:subscribe',
         code_challenge: codeChallenge,
         code_challenge_method: 'S256',
         state: state
