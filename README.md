@@ -120,6 +120,11 @@ You need to run both the server and the client.
 -   **TikTok Messages Slow**: We have optimized polling to 500ms. If it feels slow, ensure your server terminal isn't throttled.
 -   **YouTube Chat Not Working**: You must be **LIVE** or have an active broadcast for YouTube to create a chat ID. Offline channels return an error.
 
+## Support
+If you find this useful, consider buying me a coffee! ☕
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/tyrwinter)
+
 ## License
 
 MIT
