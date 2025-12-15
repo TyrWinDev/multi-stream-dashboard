@@ -7,6 +7,7 @@ import LoginModal from './components/LoginModal';
 import SettingsPanel from './components/SettingsPanel';
 import StreamManager from './components/StreamManager';
 import StatusBar from './components/StatusBar';
+import AlertOverlay from './components/AlertOverlay';
 
 const SOCKET_URL = 'https://localhost:3001';
 
@@ -37,6 +38,9 @@ function App() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isDebugOpen, setIsDebugOpen] = useState(false);
     const [replyingTo, setReplyingTo] = useState(null);
+    const [currentAlert, setCurrentAlert] = useState(null); // Active Alert
+    const [alertQueue, setAlertQueue] = useState([]); // Queue of pending alerts
+    const [areAlertsEnabled, setAreAlertsEnabled] = useState(true);
 
     const chatEndRef = useRef(null);
     const activityEndRef = useRef(null);
@@ -44,31 +48,47 @@ function App() {
 
     // Initial Auth Check
     useEffect(() => {
+        // ... existing auth ...
         fetch('https://localhost:3001/api/auth/status')
             .then(res => res.json())
-            .then(data => {
-                setAuthStatus({ ...data, loading: false });
-            })
-            .catch(err => {
-                console.error("Failed to check auth status:", err);
-                setAuthStatus({ twitch: { connected: false }, kick: { connected: false }, loading: false });
-            });
+            .then(data => { setAuthStatus({ ...data, loading: false }); })
+            .catch(err => setAuthStatus({ twitch: false, kick: false, loading: false }));
     }, []);
 
-    // Handlers for Modal
+    // ... Connect Handlers ...
     const handleConnectTwitch = () => window.location.assign('https://localhost:3001/api/auth/twitch');
     const handleConnectKick = () => window.location.assign('https://localhost:3001/api/auth/kick');
     const handleConnectYoutube = () => window.location.assign('https://localhost:3001/api/auth/youtube');
+    const handleTikTokConnect = (u) => u && window.location.assign(`https://localhost:3001/api/auth/tiktok?username=${u.replace('@', '')}`);
+    const handleReply = (msg) => setReplyingTo({ user: msg.user, platform: msg.platform });
 
-    const handleTikTokConnect = (rawUsername) => {
-        if (!rawUsername) return;
-        const username = rawUsername.replace('@', '');
-        // Use redirect to ensure cert acceptance
-        window.location.assign(`https://localhost:3001/api/auth/tiktok?username=${username}`);
+
+    // --- Alert Queue Logic ---
+    const addToAlertQueue = (act) => {
+        if (!areAlertsEnabled) return;
+        setAlertQueue(prev => [...prev, act]);
     };
 
-    const handleReply = (msg) => {
-        setReplyingTo({ user: msg.user, platform: msg.platform });
+    // Clear alerts if toggled off
+    useEffect(() => {
+        if (!areAlertsEnabled) {
+            setCurrentAlert(null);
+            setAlertQueue([]);
+        }
+    }, [areAlertsEnabled]);
+
+    // Watch Queue
+    useEffect(() => {
+        if (!currentAlert && alertQueue.length > 0) {
+            // Show next alert
+            const nextAlert = alertQueue[0];
+            setCurrentAlert(nextAlert); // Start showing
+            setAlertQueue(prev => prev.slice(1)); // Remove from queue
+        }
+    }, [currentAlert, alertQueue]);
+
+    const handleAlertComplete = () => {
+        setCurrentAlert(null); // This triggers the useEffect to pick the next one
     };
 
 
@@ -98,6 +118,7 @@ function App() {
                 timestamp: new Date().toISOString()
             };
             setActivities((prev) => [...prev, act].slice(-50));
+            addToAlertQueue(act); // Use Queue
         }
     };
 
@@ -193,6 +214,7 @@ function App() {
                 if (newState.length > 50) return newState.slice(newState.length - 50);
                 return newState;
             });
+            addToAlertQueue(act); // Add to Queue
         });
 
         socket.on('history', (history) => {
@@ -237,7 +259,10 @@ function App() {
                 authStatus={authStatus}
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
+                areAlertsEnabled={areAlertsEnabled}
+                onToggleAlerts={setAreAlertsEnabled}
             />
+
 
             {/* Main Content Area */}
             <div className="flex-1 flex overflow-hidden">
@@ -349,7 +374,13 @@ function App() {
                 onOpenSettings={() => setIsSettingsOpen(true)}
                 onOpenDebug={() => setIsDebugOpen(true)}
             />
-        </div>
+
+            {/* Event Alert Overlay */}
+            <AlertOverlay
+                latestEvent={currentAlert}
+                onComplete={handleAlertComplete}
+            />
+        </div >
     );
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Settings, Lock, X } from 'lucide-react';
 
-const SettingsPanel = ({ authStatus, isOpen, onClose }) => {
+const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggleAlerts }) => {
     // Click Outside Handler
     const panelRef = React.useRef(null);
     React.useEffect(() => {
@@ -120,6 +120,22 @@ const SettingsPanel = ({ authStatus, isOpen, onClose }) => {
             </div>
 
             <div className="space-y-4">
+                {/* Global Settings */}
+                <div className="p-3 bg-black/20 rounded border border-gray-700">
+                    <label className="flex items-center justify-between cursor-pointer group">
+                        <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">Enable Event Alerts</span>
+                        <div className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={areAlertsEnabled}
+                                onChange={(e) => onToggleAlerts(e.target.checked)}
+                            />
+                            <div className="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                        </div>
+                    </label>
+                </div>
+
                 <div>
                     <div className="space-y-2">
                         {/* Kick Button */}
