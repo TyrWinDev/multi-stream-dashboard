@@ -572,14 +572,23 @@ if (process.env.STREAMELEMENTS_JWT) {
 // --- ASYNC STARTUP (Moved to Bottom) ---
 (async () => {
     try {
-        const attrs = [{ name: 'commonName', value: 'localhost' }];
-        const pems = await selfsigned.generate(attrs, { days: 365 });
+        let server;
 
-        // Create HTTPS Server
-        const server = https.createServer({
-            key: pems.private,
-            cert: pems.cert
-        }, app);
+        if (process.env.NODE_ENV === 'production' && process.env.DISABLE_SSL === 'true') {
+            // Production Mode (Running behind Nginx/Proxy which handles SSL)
+            server = http.createServer(app);
+            console.log('Starting in PRODUCTION mode (HTTP)');
+        } else {
+            // Development Mode (Self-Signed HTTPS)
+            console.log('Starting in DEVELOPMENT mode (Self-Signed HTTPS)');
+            const attrs = [{ name: 'commonName', value: 'localhost' }];
+            const pems = await selfsigned.generate(attrs, { days: 365 });
+
+            server = https.createServer({
+                key: pems.private,
+                cert: pems.cert
+            }, app);
+        }
 
         io = new Server(server, {
             cors: {

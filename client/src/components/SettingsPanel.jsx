@@ -1,5 +1,7 @@
 import React from 'react';
-import { Settings, Lock, X } from 'lucide-react';
+import { X, ExternalLink, RefreshCw, Power } from 'lucide-react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:3001';
 
 const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggleAlerts, currentTheme, onSetTheme }) => {
     // Click Outside Handler
@@ -28,29 +30,19 @@ const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggle
     const status = authStatus || { twitch: false, kick: false };
 
     // ... (connect handlers remain the same) ...
-    const connectTwitch = () => {
-        // Force fully qualified URL to avoid any relative path ambiguity
-        window.location.assign('https://localhost:3001/api/auth/twitch');
-    };
-
-    const connectKick = () => {
-        window.location.assign('https://localhost:3001/api/auth/kick');
-    };
-
-    const connectYoutube = () => {
-        window.location.assign('https://localhost:3001/api/auth/youtube');
-    };
-
-    const handleTikTokConnect = (rawUsername) => {
-        if (!rawUsername) return;
-        const username = rawUsername.replace('@', '');
-        window.location.assign(`https://localhost:3001/api/auth/tiktok?username=${username}`);
+    const handleConnect = (platform) => {
+        if (platform === 'tiktok') {
+            const username = prompt("Enter TikTok Username (start with @):");
+            if (username) window.location.assign(`${API_URL}/api/auth/tiktok?username=${username.replace('@', '')}`);
+        } else {
+            window.location.assign(`${API_URL}/api/auth/${platform}`);
+        }
     };
 
     const handleDisconnect = async (platform) => {
         if (!confirm(`Are you sure you want to disconnect ${platform}?`)) return;
         try {
-            await fetch(`https://localhost:3001/api/auth/${platform}/disconnect`, { method: 'POST' });
+            await fetch(`${API_URL}/api/auth/${platform}/disconnect`, { method: 'POST' });
             window.location.reload();
         } catch (e) {
             console.error("Disconnect Error:", e);

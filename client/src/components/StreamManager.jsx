@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, Search, RefreshCw, Gamepad2, Type, ChevronDown, ChevronUp, Settings2 } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:3001';
+
 const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
     const [title, setTitle] = useState('');
     const [gameQuery, setGameQuery] = useState('');
@@ -14,7 +16,7 @@ const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
         const delayDebounceFn = setTimeout(async () => {
             if (gameQuery.length > 2) {
                 try {
-                    const res = await fetch(`https://localhost:3001/api/stream/search-game?query=${encodeURIComponent(gameQuery)}`);
+                    const res = await fetch(`${API_URL}/api/stream/search-game?query=${encodeURIComponent(gameQuery)}`);
                     const data = await res.json();
                     setGameResults(data || []);
                 } catch (e) {
@@ -63,7 +65,7 @@ const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
         const targets = Object.keys(selectedPlatforms).filter(k => selectedPlatforms[k]);
 
         try {
-            const res = await fetch('https://localhost:3001/api/stream/metadata', {
+            const res = await fetch(`${API_URL}/api/stream/metadata`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -21,6 +21,9 @@ const saveTokens = () => {
 
 const getTokens = (platform) => tokens[platform];
 
+const SERVER_BASE_URL = process.env.SERVER_URL || `https://localhost:${process.env.PORT || 3001}`;
+const CLIENT_BASE_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+
 // --- Twitch OAuth ---
 const TWITCH_AUTH_URL = 'https://id.twitch.tv/oauth2/authorize';
 const TWITCH_TOKEN_URL = 'https://id.twitch.tv/oauth2/token';
@@ -29,7 +32,7 @@ const TWITCH_SCOPES = 'chat:read chat:edit channel:read:subscriptions channel:ma
 const startTwitchAuth = (res) => {
     const params = new URLSearchParams({
         client_id: process.env.TWITCH_CLIENT_ID,
-        redirect_uri: `https://localhost:${process.env.PORT || 3001}/api/auth/twitch/callback`,
+        redirect_uri: `${SERVER_BASE_URL}/api/auth/twitch/callback`,
         response_type: 'code',
         scope: TWITCH_SCOPES
     });
@@ -47,7 +50,7 @@ const handleTwitchCallback = async (req, res) => {
                 client_secret: process.env.TWITCH_CLIENT_SECRET,
                 code,
                 grant_type: 'authorization_code',
-                redirect_uri: `https://localhost:${process.env.PORT || 3001}/api/auth/twitch/callback`
+                redirect_uri: `${SERVER_BASE_URL}/api/auth/twitch/callback`
             }
         });
 
@@ -99,7 +102,7 @@ const startKickAuth = (res) => {
 
     const params = new URLSearchParams({
         client_id: process.env.KICK_CLIENT_ID,
-        redirect_uri: `https://localhost:${process.env.PORT || 3001}/api/auth/kick/callback`,
+        redirect_uri: `${SERVER_BASE_URL}/api/auth/kick/callback`,
         response_type: 'code',
         scope: 'user:read channel:read channel:write chat:write events:subscribe',
         code_challenge: codeChallenge,
@@ -126,7 +129,7 @@ const handleKickCallback = async (req, res) => {
             client_secret: process.env.KICK_CLIENT_SECRET,
             code,
             grant_type: 'authorization_code',
-            redirect_uri: `https://localhost:${process.env.PORT || 3001}/api/auth/kick/callback`,
+            redirect_uri: `${SERVER_BASE_URL}/api/auth/kick/callback`,
             code_verifier: codeVerifier
         });
 
@@ -142,7 +145,7 @@ const handleKickCallback = async (req, res) => {
             expiry: Date.now() + (resp.data.expires_in * 1000)
         };
         saveTokens();
-        res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}?auth=kick_success`);
+        res.redirect(`${CLIENT_BASE_URL}?auth=kick_success`);
     } catch (e) {
         console.error("Kick Auth Error Data:", JSON.stringify(e.response?.data, null, 2));
         res.status(500).send(`Kick Auth Failed: ${e.response?.data?.error_description || e.message}`);
@@ -153,7 +156,7 @@ const handleKickCallback = async (req, res) => {
 const oauth2Client = new google.auth.OAuth2(
     process.env.YOUTUBE_CLIENT_ID,
     process.env.YOUTUBE_CLIENT_SECRET,
-    `https://localhost:${process.env.PORT || 3001}/api/auth/youtube/callback`
+    `${SERVER_BASE_URL}/api/auth/youtube/callback`
 );
 
 const YOUTUBE_SCOPES = [

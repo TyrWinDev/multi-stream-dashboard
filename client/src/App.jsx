@@ -6,7 +6,7 @@ import DashboardLayout from './components/DashboardLayout';
 import ChatDock from './components/ChatDock';
 import ActivityDock from './components/ActivityDock';
 
-const SOCKET_URL = 'https://localhost:3001';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://localhost:3001';
 
 const PlatformIcon = ({ platform }) => {
     const colors = {
@@ -56,17 +56,17 @@ function App() {
     // Initial Auth Check
     useEffect(() => {
         // ... existing auth ...
-        fetch('https://localhost:3001/api/auth/status')
+        fetch(`${SOCKET_URL}/api/auth/status`)
             .then(res => res.json())
             .then(data => { setAuthStatus({ ...data, loading: false }); })
             .catch(err => setAuthStatus({ twitch: false, kick: false, loading: false }));
     }, []);
 
     // ... Connect Handlers ...
-    const handleConnectTwitch = () => window.location.assign('https://localhost:3001/api/auth/twitch');
-    const handleConnectKick = () => window.location.assign('https://localhost:3001/api/auth/kick');
-    const handleConnectYoutube = () => window.location.assign('https://localhost:3001/api/auth/youtube');
-    const handleTikTokConnect = (u) => u && window.location.assign(`https://localhost:3001/api/auth/tiktok?username=${u.replace('@', '')}`);
+    const handleConnectTwitch = () => window.location.assign(`${SOCKET_URL}/api/auth/twitch`);
+    const handleConnectKick = () => window.location.assign(`${SOCKET_URL}/api/auth/kick`);
+    const handleConnectYoutube = () => window.location.assign(`${SOCKET_URL}/api/auth/youtube`);
+    const handleTikTokConnect = (u) => u && window.location.assign(`${SOCKET_URL}/api/auth/tiktok?username=${u.replace('@', '')}`);
     const handleReply = (msg) => setReplyingTo({ user: msg.user, platform: msg.platform });
 
 
