@@ -7,16 +7,26 @@ A robust multi-platform dashboard for live streamers. Monitor chat, activity fee
 ## Features
 
 -   **Unified Chat**: View and scroll through chat messages from all connected platforms in one feed.
+    -   **Contextual Replies**: Click to reply directly to messages (Twitch/Kick/YouTube).
+    -   **Mentions**: Highlighted messages when you are tagged.
+-   **Stream Manager**:
+    -   **Multi-Platform Updates**: Update Title and Game/Category across **Twitch**, **Kick**, and **YouTube** simultaneously.
+    -   **Game Search**: Integrated Twitch Category search that auto-maps to other platforms.
+-   **OBS Widgets**:
+    -   **chat** and **activity** browser sources with full customization.
+    -   **Source Customizer**: Visual editor for fonts, colors, animations, and transparency.
+    -   **Import Config**: Restore your previous widget settings by pasting the generated URL.
 -   **Activity Feed**: Real-time updates for follows, subscriptions, tips, and gifts.
+    -   **Event Animations**: Confetti and sliding alerts for high-value events.
 -   **Multi-Platform Support**:
     -   **Twitch**: OAuth integration, chat (read/write), subs/follows.
     -   **Kick**: OAuth + PKCE integration, chat (read/write via v1 API), subs/follows.
     -   **YouTube**: OAuth integration, Live Chat (read/write via polling).
     -   **TikTok**: Connect via Username (read-only), optimized for low latency (500ms), supports Gifts/Likes/Chat.
+-   **Dynamic Theming**:
+    -   **4 Presets**: Default, Cyberpunk (Neon), Soft Dark (Slate), High Contrast.
+    -   **Persistence**: Theme preferences are saved locally.
 -   **Secure**: Runs on HTTPS with self-signed certificates (development mode).
--   **Responsive UI**: Modern, dark-themed dashboard built with React and Tailwind CSS.
--   **Custom Themes**: Choose from Cyberpunk, Soft Dark, High Contrast, or Default styles.
--   **Event Animations**: Built-in alerts for follows/subs with confetti and sound effects.
 
 ## Prerequisites
 
@@ -97,22 +107,26 @@ You need to run both the server and the client.
 1.  **Access the Dashboard:**
     Open your browser to `http://localhost:5173`.
 
-2.  **Initial Connection:**
-    -   When you first load the app, a **Login Modal** will appear.
-    -   Click "Connect" for the platforms you want to use.
-    -   For **TikTok**, enter your username (e.g., `your_username`) and click Connect.
+2.  **Connection Manager:**
+    -   Click the **Gear Icon** (right side status bar) to open Settings.
+    -   Connect/Disconnect platforms and toggle "Event Alerts" logic.
+    -   Change **Themes** (Default, Cyberpunk, etc.) instantly.
 
-3.  **Authentication & Security:**
-    -   Since the server uses a self-signed HTTPS certificate, you might see a browser warning on your first login or API call.
-    -   **Fix:** Go to `https://localhost:3001` in your browser and click "Advanced" -> "Proceed to localhost (unsafe)" to accept the certificate.
+3.  **Stream Manager:**
+    -   Open the bottom-left "Stream Manager" panel.
+    -   Select platforms to update (Twitch, Kick, YouTube).
+    -   Enter a **Title** and search for a **Game** (uses Twitch directory).
+    -   Click **Update** to push changes to all selected platforms.
 
-4.  **Managing Connections:**
-    -   Click the **Gear Icon** (bottom left) to open the **Connection Manager**.
-    -   You can verify connection status (Green = Connected/Linked) or disconnect platforms here.
+4.  **OBS Integration:**
+    -   Click "Popout Chat" or "Popout Activity" in the dock headers.
+    -   Use the **Customizer Modal** to style your overlay (Fonts, Colors, Transparency).
+    -   **Copy URL**: Paste this into a Browser Source in OBS.
+    -   **Import URL**: Paste an existing Browser Source URL to edit its settings.
 
 5.  **Streaming:**
-    -   **Chat**: Type in the input box to send messages to all connected write-supported platforms (Twitch, Kick, YouTube).
-    -   **Activity**: Watch the right-hand panel for real-time events.
+    -   **Chat**: Type in the input box to send messages to all connected write-supported platforms.
+    -   **Reply**: Click the "Reply" arrow on a message to thread your response.
 
 ## Troubleshooting
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Monitor, Layout, Type, Palette, Zap } from 'lucide-react';
+import { X, Copy, Check, Monitor, Layout, Type, Palette, Zap, Settings2 } from 'lucide-react';
 import ChatDock from './ChatDock';
 import ActivityDock from './ActivityDock';
 
@@ -114,6 +114,69 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const [importUrl, setImportUrl] = useState('');
+    const handleImport = () => {
+        try {
+            const urlObj = new URL(importUrl);
+            const params = urlObj.searchParams;
+
+            const newConfig = { ...config };
+
+            // Background
+            if (params.get('transparent') === 'true') {
+                newConfig.bgType = 'transparent';
+            } else {
+                newConfig.bgType = 'custom';
+                const bgCol = params.get('bg_color');
+                if (bgCol) newConfig.bgColor = bgCol.startsWith('#') ? bgCol : `#${bgCol}`;
+                const bgOp = params.get('bg_opacity');
+                if (bgOp) newConfig.bgOpacity = parseInt(bgOp);
+            }
+
+            // Typography & Layout
+            const font = params.get('font');
+            if (font) newConfig.font = font;
+
+            const size = params.get('size');
+            if (size) newConfig.size = parseInt(size);
+
+            const badges = params.get('badges');
+            if (badges === 'false') newConfig.badges = false;
+            else newConfig.badges = true; // Default true
+
+            const anim = params.get('animation');
+            if (anim) newConfig.animation = anim;
+
+            const orient = params.get('orientation');
+            if (orient) newConfig.orientation = orient;
+
+            // Activity Specific
+            if (type === 'activity') {
+                const mode = params.get('color_mode');
+                if (mode) newConfig.activityColorMode = mode;
+
+                if (mode === 'custom') {
+                    const colFollow = params.get('col_follow');
+                    const colSub = params.get('col_sub');
+                    const colTip = params.get('col_tip');
+                    const colGift = params.get('col_gift');
+
+                    if (colFollow) newConfig.eventColors.follow = colFollow.startsWith('#') ? colFollow : `#${colFollow}`;
+                    if (colSub) newConfig.eventColors.sub = colSub.startsWith('#') ? colSub : `#${colSub}`;
+                    if (colTip) newConfig.eventColors.tip = colTip.startsWith('#') ? colTip : `#${colTip}`;
+                    if (colGift) newConfig.eventColors.gift = colGift.startsWith('#') ? colGift : `#${colGift}`;
+                }
+            }
+
+            setConfig(newConfig);
+            setImportUrl(''); // Clear input on success
+            alert("Configuration Imported Successfully!");
+        } catch (e) {
+            console.error(e);
+            alert("Invalid URL. Please paste a valid full URL.");
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] backdrop-blur-sm animate-fade-in p-4">
             <div className="bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden">
@@ -132,6 +195,29 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                 <div className="flex-1 flex flex-row overflow-hidden">
                     {/* Controls */}
                     <div className="w-80 min-w-[320px] bg-[#151515] border-r border-gray-700 p-6 overflow-y-auto space-y-8 scrollbar-thin scrollbar-thumb-gray-800 shrink-0">
+                        {/* Import Settings - MOVED TO TOP */}
+                        <div className="pb-6 border-b border-gray-800 space-y-3">
+                            <div className="flex items-center text-sm font-bold text-gray-300">
+                                <Settings2 className="w-4 h-4 mr-2 text-accent" /> Import Config
+                            </div>
+                            <div className="space-y-2">
+                                <input
+                                    type="text"
+                                    value={importUrl}
+                                    onChange={(e) => setImportUrl(e.target.value)}
+                                    placeholder="Paste URL here..."
+                                    className="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:border-accent outline-none font-mono"
+                                />
+                                <button
+                                    onClick={handleImport}
+                                    disabled={!importUrl}
+                                    className="w-full py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Import Settings
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Font Settings */}
                         <div className="space-y-3">
                             <div className="flex items-center text-sm font-bold text-gray-300"><Type className="w-4 h-4 mr-2 text-accent" />Typography</div>
