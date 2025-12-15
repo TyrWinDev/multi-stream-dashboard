@@ -22,10 +22,79 @@ const AlertOverlay = ({ latestEvent, onComplete }) => {
         }
     }, [latestEvent]);
 
-    const playAudio = (type) => {
-        // Placeholder for real audio
-        // const audio = new Audio('/sounds/alert.mp3');
-        // audio.play().catch(e => console.log("Audio play failed (interaction needed first)"));
+    const playAudio = async (type) => {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+
+            const ctx = new AudioContext();
+            if (ctx.state === 'suspended') await ctx.resume();
+
+            const now = ctx.currentTime;
+
+            // Helper to play a single tone
+            const playTone = (freq, type = 'sine', duration = 0.5, startTime = 0, vol = 0.3) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.value = freq;
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(vol, startTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            };
+
+            switch (type) {
+                case 'follow':
+                    // "Ding-Dong"
+                    playTone(1046.50, 'sine', 0.6, now, 0.35); // C6
+                    playTone(880.00, 'sine', 1.0, now + 0.2, 0.35); // A5
+                    break;
+                case 'sub':
+                    // "Power Up" (Ascending Triad)
+                    playTone(440.00, 'triangle', 0.3, now, 0.3); // A4
+                    playTone(554.37, 'triangle', 0.3, now + 0.1, 0.3); // C#5
+                    playTone(659.25, 'triangle', 0.8, now + 0.2, 0.3); // E5
+                    break;
+                case 'tip':
+                    // "Coin" (Fast Slide)
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1200, now);
+                    osc.frequency.linearRampToValueAtTime(2000, now + 0.1); // Slide up
+
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.4);
+
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                    break;
+                case 'gift':
+                    // "Fanfare" (Major Chord)
+                    playTone(523.25, 'sawtooth', 0.8, now, 0.2); // C5
+                    playTone(659.25, 'sawtooth', 0.8, now, 0.2); // E5
+                    playTone(783.99, 'sawtooth', 0.8, now, 0.2); // G5
+                    playTone(1046.50, 'sawtooth', 0.8, now + 0.1, 0.2); // C6
+                    break;
+                default:
+                    // Default Beep
+                    playTone(600, 'sine', 0.5, now, 0.3);
+            }
+
+        } catch (e) {
+            console.error("Audio play failed", e);
+        }
     };
 
     const fireConfetti = (type) => {
