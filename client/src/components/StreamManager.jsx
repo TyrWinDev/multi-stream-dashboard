@@ -34,14 +34,26 @@ const StreamManager = ({ authStatus, isExpanded, onToggleExpand }) => {
         kick: false
     });
 
-    // Initialize checkboxes based on connection status
+    // Initialize checkboxes based on connection status & saved preferences
     useEffect(() => {
+        if (authStatus.loading) return; // Wait for auth to load
+
+        const saved = JSON.parse(localStorage.getItem('stream_manager_platforms') || '{}');
+
         setSelectedPlatforms({
-            twitch: !!authStatus.twitch?.connected,
-            youtube: !!authStatus.youtube?.connected,
-            kick: !!authStatus.kick?.connected
+            // If connected AND (saved as true OR not saved yet), default to true. 
+            // If saved as false, respect that. 
+            twitch: !!authStatus.twitch?.connected && (saved.twitch !== false),
+            youtube: !!authStatus.youtube?.connected && (saved.youtube !== false),
+            kick: !!authStatus.kick?.connected && (saved.kick !== false)
         });
     }, [authStatus]);
+
+    // Persistence: Save selection
+    useEffect(() => {
+        if (authStatus.loading) return; // Don't save default "false" values while loading
+        localStorage.setItem('stream_manager_platforms', JSON.stringify(selectedPlatforms));
+    }, [selectedPlatforms, authStatus.loading]);
 
     const handleUpdate = async () => {
         setIsUpdating(true);

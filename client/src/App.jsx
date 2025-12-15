@@ -40,11 +40,21 @@ function App() {
     const [replyingTo, setReplyingTo] = useState(null);
     const [currentAlert, setCurrentAlert] = useState(null); // Active Alert
     const [alertQueue, setAlertQueue] = useState([]); // Queue of pending alerts
-    const [areAlertsEnabled, setAreAlertsEnabled] = useState(true);
+    const [areAlertsEnabled, setAreAlertsEnabled] = useState(localStorage.getItem('alerts_enabled') !== 'false');
 
     const chatEndRef = useRef(null);
     const activityEndRef = useRef(null);
     const socketRef = useRef(null);
+
+    // Persistence: Theme
+    useEffect(() => {
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    // Persistence: Alerts
+    useEffect(() => {
+        localStorage.setItem('alerts_enabled', areAlertsEnabled);
+    }, [areAlertsEnabled]);
 
     // Initial Auth Check
     useEffect(() => {
