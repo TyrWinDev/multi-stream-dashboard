@@ -88,7 +88,15 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
         // Only apply background effectively to root if vertical, 
         // OR if it's transparent (to clear defaults).
         // If horizontal, we want the root 'transparent' so the strip can have the bg.
+        // Background is now applied to the INNER container, not the root, 
+        // to allow the root to be transparent and valid for positioning.
+        backgroundColor: 'transparent',
+    };
+
+    // Inner Container Style (The actual "Chat Box")
+    const boxStyles = {
         backgroundColor: config.orientation === 'vertical' ? getBackgroundColor() : 'transparent',
+        borderRadius: config.isTransparent ? '0px' : '8px',
     };
 
     // Style for the horizontal strip specifically
@@ -138,129 +146,136 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
 
     return (
         <div
-            className={`flex h-full w-full overflow-hidden ${config.isTransparent ? '' : 'rounded-lg shadow-lg'} `}
+            className={`flex h-full w-full overflow-hidden ${config.orientation === 'vertical' ? 'p-4' : ''} ${getPositionClasses()}`}
             style={styles}
         >
-            {/* Header (Hidden unless popout) */}
-            {isPopout && (
-                <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-secondary">
-                    <h2 className="font-bold text-main">Stream Chat</h2>
-                    <div className="flex items-center space-x-2">
-                        <button
-                            onClick={() => setShowSettings(true)}
-                            className="text-muted hover:text-accent transition-colors"
-                            title="Dock Settings"
-                        >
-                            <Settings2 className="w-4 h-4" />
-                        </button>
-                        {!isPopout && (
-                            <button onClick={copyUrl} className="text-muted hover:text-accent transition-colors" title="Copy OBS Browser Source URL">
-                                <Copy className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Chat List */}
+            {/* Inner Container (Background applied here) */}
             <div
-                className={`flex-1 w-full overflow-hidden flex p-4 ${getPositionClasses()}`}
-                style={horizontalStripStyle}
+                className={`flex flex-col w-full ${config.orientation === 'vertical' ? 'max-h-full shadow-lg overflow-hidden' : 'h-full'}`}
+                style={boxStyles}
             >
-                <div className={`flex ${getListClasses()}`}>
-                    {messages.length === 0 ? (
-                        <div className="text-center opacity-50 mt-10 italic">
-                            No messages yet... waiting for chat events.
+                {/* Header (Hidden unless popout) */}
+                {isPopout && (
+                    <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-secondary">
+                        <h2 className="font-bold text-main">Stream Chat</h2>
+                        <div className="flex items-center space-x-2">
+                            <button
+                                onClick={() => setShowSettings(true)}
+                                className="text-muted hover:text-accent transition-colors"
+                                title="Dock Settings"
+                            >
+                                <Settings2 className="w-4 h-4" />
+                            </button>
+                            {!isPopout && (
+                                <button onClick={copyUrl} className="text-muted hover:text-accent transition-colors" title="Copy OBS Browser Source URL">
+                                    <Copy className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
-                    ) : (
-                        messages.map((msg) => {
-                            const messageText = msg.text || '';
-                            const isMention = messageText.toLowerCase().includes((authStatus?.twitch?.username || '').toLowerCase());
+                    </div>
+                )}
 
-                            // Theme-aware Mention Styling
-                            const mentionStyle = isMention
-                                ? "bg-accent/10 border-l-4 border-accent pl-3 -ml-3 rounded-r transition-colors duration-300"
-                                : "";
+                {/* Chat List */}
+                <div
+                    className={`w-full overflow-hidden flex ${config.orientation === 'vertical' ? 'flex-1 p-2' : ''}`}
+                    style={horizontalStripStyle}
+                >
+                    <div className={`flex ${getListClasses()}`}>
+                        {messages.length === 0 ? (
+                            <div className="text-center opacity-50 mt-10 italic">
+                                No messages yet... waiting for chat events.
+                            </div>
+                        ) : (
+                            messages.map((msg) => {
+                                const messageText = msg.text || '';
+                                const isMention = messageText.toLowerCase().includes((authStatus?.twitch?.username || '').toLowerCase());
 
-                            // Animations
-                            const animClass = config.animation === 'slide' ? 'animate-slide-in-right' :
-                                config.animation === 'none' ? '' : 'animate-fade-in';
+                                // Theme-aware Mention Styling
+                                const mentionStyle = isMention
+                                    ? "bg-accent/10 border-l-4 border-accent pl-3 -ml-3 rounded-r transition-colors duration-300"
+                                    : "";
 
-                            const fadeStyle = config.fadeOut > 0 ? {
-                                animation: `${config.animation !== 'none' ? 'fadeIn 0.3s ease-out, ' : ''}fadeOut 1s ease-in forwards`,
-                                animationDelay: `0s, ${config.fadeOut}s`
-                            } : undefined;
+                                // Animations
+                                const animClass = config.animation === 'slide' ? 'animate-slide-in-right' :
+                                    config.animation === 'none' ? '' : 'animate-fade-in';
 
-                            return (
-                                <div
-                                    key={msg.id}
-                                    className={`${config.animation !== 'none' && !config.fadeOut ? animClass : ''} group ${mentionStyle} ${config.orientation === 'horizontal' ? 'inline-flex items-center space-x-2 mr-6 bg-black/20 px-3 py-1 rounded-full' : ''}`}
-                                    style={fadeStyle}
-                                >
-                                    <div className={`flex items-baseline space-x-2 text-main ${config.orientation === 'horizontal' ? 'flex-shrink-0' : ''}`} style={{ fontSize: '0.9em' }}> {/* Scale meta text slightly smaller */}
-                                        {/* Platform Badge */}
-                                        {config.badges && (
-                                            <span className={`
+                                const fadeStyle = config.fadeOut > 0 ? {
+                                    animation: `${config.animation !== 'none' ? 'fadeIn 0.3s ease-out, ' : ''}fadeOut 1s ease-in forwards`,
+                                    animationDelay: `0s, ${config.fadeOut}s`
+                                } : undefined;
+
+                                return (
+                                    <div
+                                        key={msg.id}
+                                        className={`${config.animation !== 'none' && !config.fadeOut ? animClass : ''} group ${mentionStyle} ${config.orientation === 'horizontal' ? 'inline-flex items-center space-x-2 mr-6 bg-black/20 px-3 py-1 rounded-full' : ''}`}
+                                        style={fadeStyle}
+                                    >
+                                        <div className={`flex items-baseline space-x-2 text-main ${config.orientation === 'horizontal' ? 'flex-shrink-0' : ''}`} style={{ fontSize: '0.9em' }}> {/* Scale meta text slightly smaller */}
+                                            {/* Platform Badge */}
+                                            {config.badges && (
+                                                <span className={`
                                             px-1.5 py-0.5 rounded text-[0.7em] uppercase font-bold tracking-wider
                                             ${msg.platform === 'twitch' ? 'bg-purple-900/40 text-purple-400 border border-purple-500/30' :
-                                                    msg.platform === 'youtube' ? 'bg-red-900/40 text-red-400 border border-red-500/30' :
-                                                        msg.platform === 'kick' ? 'bg-green-900/40 text-green-400 border border-green-500/30' :
-                                                            'bg-pink-900/40 text-pink-400 border border-pink-500/30'}
+                                                        msg.platform === 'youtube' ? 'bg-red-900/40 text-red-400 border border-red-500/30' :
+                                                            msg.platform === 'kick' ? 'bg-green-900/40 text-green-400 border border-green-500/30' :
+                                                                'bg-pink-900/40 text-pink-400 border border-pink-500/30'}
                                         `}>
-                                                {msg.platform}
+                                                    {msg.platform}
+                                                </span>
+                                            )}
+
+                                            {/* Username */}
+                                            <span className="font-bold text-white whitespace-nowrap">
+                                                {msg.user}
                                             </span>
-                                        )}
 
-                                        {/* Username */}
-                                        <span className="font-bold text-white whitespace-nowrap">
-                                            {msg.user}
-                                        </span>
+                                            {/* Timestamp (Hide in horizontal mode) */}
+                                            {config.orientation !== 'horizontal' && (
+                                                <span className="opacity-50 text-[0.8em]">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            )}
 
-                                        {/* Timestamp (Hide in horizontal mode) */}
-                                        {config.orientation !== 'horizontal' && (
-                                            <span className="opacity-50 text-[0.8em]">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                        )}
+                                            {/* Reply Button (Only show if not transparent/OBS) */}
+                                            {!config.isTransparent && !previewConfig && ['twitch', 'kick', 'youtube'].includes(msg.platform) && (
+                                                <button
+                                                    onClick={() => setReplyingTo(msg)}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-accent hover:underline ml-2"
+                                                >
+                                                    Reply
+                                                </button>
+                                            )}
+                                        </div>
 
-                                        {/* Reply Button (Only show if not transparent/OBS) */}
-                                        {!config.isTransparent && !previewConfig && ['twitch', 'kick', 'youtube'].includes(msg.platform) && (
-                                            <button
-                                                onClick={() => setReplyingTo(msg)}
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-accent hover:underline ml-2"
-                                            >
-                                                Reply
-                                            </button>
-                                        )}
+                                        {/* Message Content */}
+                                        <div className={`${config.orientation === 'horizontal' ? 'ml-0 text-white truncate max-w-[300px]' : 'mt-0.5 break-words'} leading-relaxed ${isMention ? 'text-accent font-medium' : 'text-gray-300'}`}>
+                                            {msg.replyTo && config.orientation !== 'horizontal' && (
+                                                <div className="bg-white/5 inline-flex items-center rounded px-1.5 py-0.5 mb-1 mr-1 text-[0.8em] opacity-70">
+                                                    <span>Replying to {typeof msg.replyTo === 'string' ? msg.replyTo : '@User'}</span>
+                                                </div>
+                                            )}
+                                            {config.orientation === 'horizontal' && <span className="text-gray-500 mr-2">:</span>}
+                                            {parseEmotes(messageText, msg.emotes)}
+                                        </div>
                                     </div>
-
-                                    {/* Message Content */}
-                                    <div className={`${config.orientation === 'horizontal' ? 'ml-0 text-white truncate max-w-[300px]' : 'mt-0.5 break-words'} leading-relaxed ${isMention ? 'text-accent font-medium' : 'text-gray-300'}`}>
-                                        {msg.replyTo && config.orientation !== 'horizontal' && (
-                                            <div className="bg-white/5 inline-flex items-center rounded px-1.5 py-0.5 mb-1 mr-1 text-[0.8em] opacity-70">
-                                                <span>Replying to {typeof msg.replyTo === 'string' ? msg.replyTo : '@User'}</span>
-                                            </div>
-                                        )}
-                                        {config.orientation === 'horizontal' && <span className="text-gray-500 mr-2">:</span>}
-                                        {parseEmotes(messageText, msg.emotes)}
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
-                    <div ref={endRef} />
+                                );
+                            })
+                        )}
+                        <div ref={endRef} />
+                    </div>
                 </div>
-            </div>
 
-            {/* Input Area (Hidden unless popout) */}
-            {isPopout && (
-                <div className="p-4 border-t border-border bg-tertiary">
-                    <ChatInput
-                        onSend={sendMessage}
-                        connectedPlatforms={['twitch', 'kick', 'youtube'].filter((p) => authStatus[p]?.connected)}
-                        replyingTo={replyingTo}
-                        onCancelReply={() => setReplyingTo(null)}
-                    />
-                </div>
-            )}
+                {/* Input Area (Hidden unless popout) */}
+                {isPopout && (
+                    <div className="p-4 border-t border-border bg-tertiary">
+                        <ChatInput
+                            onSend={sendMessage}
+                            connectedPlatforms={['twitch', 'kick', 'youtube'].filter((p) => authStatus[p]?.connected)}
+                            replyingTo={replyingTo}
+                            onCancelReply={() => setReplyingTo(null)}
+                        />
+                    </div>
+                )}
+
+            </div> {/* End of Inner Container */}
 
             {/* Customizer Modal (Only for standalone Dock) */}
             {!previewConfig && (

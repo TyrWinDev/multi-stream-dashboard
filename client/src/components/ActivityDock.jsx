@@ -89,8 +89,18 @@ const ActivityDock = ({ activities, previewConfig }) => {
     const containerStyles = {
         fontFamily: getFontFamily(config.font),
         fontSize: `${config.size}px`,
-        // Container is transparent now, individual events carry the bg
+        // Background moved to inner container
         backgroundColor: 'transparent',
+    };
+
+    const boxStyles = {
+        // Only apply background checks if vertical usually, but relying on transparent logic
+        // For activity dock, we usually have transparent background for list items?
+        // User might set a custom background color for the whole dock.
+        // So we apply it here.
+        backgroundColor: config.isTransparent ? 'transparent' : (config.bgColor ? `rgba(${parseInt(config.bgColor.slice(1, 3), 16)}, ${parseInt(config.bgColor.slice(3, 5), 16)}, ${parseInt(config.bgColor.slice(5, 7), 16)}, ${config.bgOpacity / 100})` : 'transparent'),
+        borderRadius: config.isTransparent ? '0px' : '8px',
+        border: config.isTransparent ? 'none' : '1px solid rgba(255,255,255,0.1)'
     };
 
     // Layout Logic (Shared with ChatDock logic)
@@ -140,110 +150,116 @@ const ActivityDock = ({ activities, previewConfig }) => {
 
     return (
         <div
-            className={`flex ${config.orientation === 'vertical' ? 'flex-col h-full overflow-hidden' : 'flex-row items-end h-full overflow-hidden w-full'}`}
+            className={`flex h-full w-full overflow-hidden ${config.orientation === 'vertical' ? 'p-4' : ''} ${getPositionClasses()}`}
             style={containerStyles}
         >
-            {/* Header (Hidden unless popout) */}
-            {isPopout && (
-                <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-secondary shrink-0 w-full">
-                    <h2 className="font-bold text-main">Activity Feed</h2>
-                    <div className="flex items-center space-x-2">
-                        <button
-                            onClick={() => setShowSettings(true)}
-                            className="text-muted hover:text-accent transition-colors"
-                            title="Dock Settings"
-                        >
-                            <Settings2 className="w-4 h-4" />
-                        </button>
-                        {!isPopout && (
-                            <button onClick={copyUrl} className="text-muted hover:text-accent transition-colors" title="Copy OBS Browser Source URL">
-                                <Copy className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Activity List */}
+            {/* Inner Container */}
             <div
-                className={`flex-1 w-full overflow-hidden flex p-4 ${getPositionClasses()}`}
-            // Using style for horizontal ticker background if needed (not usually for activity dock transparent)
+                className={`flex flex-col w-full ${config.orientation === 'vertical' ? 'max-h-full shadow-lg overflow-hidden' : 'h-full'}`}
+                style={config.orientation === 'vertical' ? boxStyles : {}}
             >
-                <div className={`flex ${getListClasses()}`}>
-                    {activities.length === 0 ? (
-                        <div className="text-center opacity-50 italic w-full">
-                            No recent activity...
+                {/* Header (Hidden unless popout) */}
+                {isPopout && (
+                    <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-secondary shrink-0 w-full">
+                        <h2 className="font-bold text-main">Activity Feed</h2>
+                        <div className="flex items-center space-x-2">
+                            <button
+                                onClick={() => setShowSettings(true)}
+                                className="text-muted hover:text-accent transition-colors"
+                                title="Dock Settings"
+                            >
+                                <Settings2 className="w-4 h-4" />
+                            </button>
+                            {!isPopout && (
+                                <button onClick={copyUrl} className="text-muted hover:text-accent transition-colors" title="Copy OBS Browser Source URL">
+                                    <Copy className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
-                    ) : (
-                        activities.map((act) => {
-                            // Icons based on type
-                            let Icon = Heart;
-                            let colorClass = "text-white"; // default white for colorful bgs
+                    </div>
+                )}
 
-                            // In simple mode, we might want colored icons? 
-                            // But for now, let's keep icons white if background is colored, or colored if background is dark?
-                            // Let's stick to standard behavior: Icon color matches type usually.
-                            // However, if the BACKGROUND is the type color, the icon should probably be white.
+                {/* Activity List */}
+                <div
+                    className={`flex w-full overflow-hidden ${config.orientation === 'vertical' ? 'flex-1 p-2' : ''}`}
+                // Using style for horizontal ticker background if needed (not usually for activity dock transparent)
+                >
+                    <div className={`flex ${getListClasses()}`}>
+                        {activities.length === 0 ? (
+                            <div className="text-center opacity-50 italic w-full">
+                                No recent activity...
+                            </div>
+                        ) : (
+                            activities.map((act) => {
+                                // Icons based on type
+                                let Icon = Heart;
+                                let colorClass = "text-white"; // default white for colorful bgs
 
-                            const isColorful = config.colorMode !== 'simple';
+                                // In simple mode, we might want colored icons? 
+                                // But for now, let's keep icons white if background is colored, or colored if background is dark?
+                                // Let's stick to standard behavior: Icon color matches type usually.
+                                // However, if the BACKGROUND is the type color, the icon should probably be white.
 
-                            if (act.type === 'sub') { Icon = Star; }
-                            if (act.type === 'tip') { Icon = DollarSign; }
-                            if (act.type === 'gift') { Icon = Gift; }
+                                const isColorful = config.colorMode !== 'simple';
 
-                            // If simple mode, use colored icons. If colorful/custom, use white icons (assuming bg is colored).
-                            if (!isColorful) {
-                                if (act.type === 'sub') colorClass = "text-purple-400";
-                                else if (act.type === 'tip') colorClass = "text-green-400";
-                                else if (act.type === 'gift') colorClass = "text-blue-400";
-                                else colorClass = "text-pink-400";
-                            }
+                                if (act.type === 'sub') { Icon = Star; }
+                                if (act.type === 'tip') { Icon = DollarSign; }
+                                if (act.type === 'gift') { Icon = Gift; }
 
-                            // Animations
-                            const animClass = config.animation === 'slide' ? 'animate-slide-in-right' :
-                                config.animation === 'none' ? '' : 'animate-fade-in';
+                                // If simple mode, use colored icons. If colorful/custom, use white icons (assuming bg is colored).
+                                if (!isColorful) {
+                                    if (act.type === 'sub') colorClass = "text-purple-400";
+                                    else if (act.type === 'tip') colorClass = "text-green-400";
+                                    else if (act.type === 'gift') colorClass = "text-blue-400";
+                                    else colorClass = "text-pink-400";
+                                }
 
-                            const fadeStyle = config.fadeOut > 0 ? {
-                                animation: `${config.animation !== 'none' ? 'fadeIn 0.3s ease-out, ' : ''}fadeOut 1s ease-in forwards`,
-                                animationDelay: `0s, ${config.fadeOut}s`
-                            } : undefined;
+                                // Animations
+                                const animClass = config.animation === 'slide' ? 'animate-slide-in-right' :
+                                    config.animation === 'none' ? '' : 'animate-fade-in';
 
-                            return (
-                                <div
-                                    key={act.id}
-                                    className={`${config.animation !== 'none' && !config.fadeOut ? animClass : ''} relative flex items-center rounded-lg p-2 shrink-0 border border-white/5 shadow-sm transition-all hover:scale-[1.02]`}
-                                    style={{ ...getEventStyle(act.type), ...fadeStyle }}
-                                >
-                                    {/* Icon Badge */}
-                                    {config.badges && (
-                                        <div className={`p-1.5 rounded-full bg-black/20 mr-3 ${colorClass}`}>
-                                            <Icon className="w-4 h-4" />
-                                        </div>
-                                    )}
+                                const fadeStyle = config.fadeOut > 0 ? {
+                                    animation: `${config.animation !== 'none' ? 'fadeIn 0.3s ease-out, ' : ''}fadeOut 1s ease-in forwards`,
+                                    animationDelay: `0s, ${config.fadeOut}s`
+                                } : undefined;
 
-                                    <div className="leading-tight pr-2">
-                                        <div className="flex items-center space-x-2">
-                                            <span className="font-bold text-white tracking-wide shadow-black drop-shadow-sm">{act.user}</span>
+                                return (
+                                    <div
+                                        key={act.id}
+                                        className={`${config.animation !== 'none' && !config.fadeOut ? animClass : ''} relative flex items-center rounded-lg p-2 shrink-0 border border-white/5 shadow-sm transition-all hover:scale-[1.02]`}
+                                        style={{ ...getEventStyle(act.type), ...fadeStyle }}
+                                    >
+                                        {/* Icon Badge */}
+                                        {config.badges && (
+                                            <div className={`p-1.5 rounded-full bg-black/20 mr-3 ${colorClass}`}>
+                                                <Icon className="w-4 h-4" />
+                                            </div>
+                                        )}
 
-                                            {config.badges && ( // Platform Icon small
-                                                <span className="text-[10px] uppercase text-white/50 bg-black/30 px-1 rounded backdrop-blur-[2px]">
-                                                    {act.platform.slice(0, 2)}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="text-[0.9em] text-white/80 font-medium">
-                                            <span className="capitalize">{act.type}</span>
-                                            {act.details && <span className="text-white ml-1 font-bold">{act.details}</span>}
+                                        <div className="leading-tight pr-2">
+                                            <div className="flex items-center space-x-2">
+                                                <span className="font-bold text-white tracking-wide shadow-black drop-shadow-sm">{act.user}</span>
+
+                                                {config.badges && ( // Platform Icon small
+                                                    <span className="text-[10px] uppercase text-white/50 bg-black/30 px-1 rounded backdrop-blur-[2px]">
+                                                        {act.platform.slice(0, 2)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-[0.9em] text-white/80 font-medium">
+                                                <span className="capitalize">{act.type}</span>
+                                                {act.details && <span className="text-white ml-1 font-bold">{act.details}</span>}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })
-                    )}
-                    {config.orientation === 'vertical' && <div ref={endRef} />}
-                </div>
+                                );
+                            })
+                        )}
+                        {config.orientation === 'vertical' && <div ref={endRef} />}
+                    </div>
 
-            </div>
+                </div>
+            </div> {/* End Inner */}
 
             {/* Customizer Modal (Only for standalone Dock) */}
             {!previewConfig && (
