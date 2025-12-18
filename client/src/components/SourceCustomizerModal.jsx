@@ -51,6 +51,8 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
         fadeOut: 0,
         position: 'bottom_left',
         reverse: false,
+        animation: 'fade', // Fix: Initialize animation to prevent undefined in URL
+        badges: true, // Fix: Initialize badges defaults to true
     });
 
     // Preview data state

@@ -111,6 +111,19 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
         endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    // --- Idle Fade Logic (Horizontal Only) ---
+    const [isIdle, setIsIdle] = useState(false);
+    useEffect(() => {
+        if (config.orientation !== 'horizontal' || config.fadeOut > 0) return; // Don't interfere if per-message fade is on, or if vertical
+
+        setIsIdle(false);
+        const timer = setTimeout(() => {
+            setIsIdle(true);
+        }, 30000); // 30s inactivity
+
+        return () => clearTimeout(timer);
+    }, [messages, config.orientation, config.fadeOut]);
+
     const copyUrl = () => {
         const url = `${window.location.origin}/chat?transparent=true`;
         navigator.clipboard.writeText(url);
@@ -130,6 +143,7 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
             if (config.position.includes('right')) align = 'items-end';
             if (config.position.includes('center')) align = 'items-center';
 
+            // Changed width to w-full to allow OBS to control size
             return `flex-col ${justify} ${align}`;
         }
     };
@@ -137,10 +151,12 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
     const getListClasses = () => {
         if (config.orientation === 'horizontal') {
             const dir = config.reverse ? 'flex-row-reverse space-x-reverse' : 'flex-row';
-            return `${dir} space-x-4 overflow-x-auto w-full`;
+            return `${dir} space-x-4 overflow-x-auto w-full no-scrollbar`; // Added no-scrollbar
         } else {
             const dir = config.reverse ? 'flex-col-reverse space-y-reverse' : 'flex-col';
-            return `${dir} space-y-2 w-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-800`;
+            // Removed visible scrollbar classes, added generic hide strategy or just reliance on container
+            // If user wants NO scrollbar, we can use a utility class or style
+            return `${dir} space-y-2 w-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']`;
         }
     };
 
@@ -151,7 +167,7 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
         >
             {/* Inner Container (Background applied here) */}
             <div
-                className={`flex flex-col ${config.orientation === 'vertical' ? 'max-h-full w-80 md:w-96 shadow-lg overflow-hidden' : 'h-full w-full'}`}
+                className={`flex flex-col ${config.orientation === 'vertical' ? 'max-h-full w-full max-w-[600px] shadow-lg overflow-hidden' : 'h-full w-full'}`}
                 style={boxStyles}
             >
                 {/* Header (Hidden unless popout) */}
@@ -177,8 +193,11 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
 
                 {/* Chat List */}
                 <div
-                    className={`w-full overflow-hidden flex ${config.orientation === 'vertical' ? 'flex-1 p-2' : ''}`}
-                    style={horizontalStripStyle}
+                    className={`w-full overflow-hidden flex ${config.orientation === 'vertical' ? 'flex-1 p-2' : ''} transition-opacity duration-1000`}
+                    style={{
+                        ...horizontalStripStyle,
+                        opacity: (config.orientation === 'horizontal' && isIdle) ? 0 : 1
+                    }}
                 >
                     <div className={`flex ${getListClasses()}`}>
                         {messages.length === 0 ? (
@@ -246,7 +265,7 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
                                         </div>
 
                                         {/* Message Content */}
-                                        <div className={`${config.orientation === 'horizontal' ? 'ml-0 text-white truncate max-w-[300px]' : 'mt-0.5 break-words'} leading-relaxed ${isMention ? 'text-accent font-medium' : 'text-gray-300'}`}>
+                                        <div className={`${config.orientation === 'horizontal' ? 'ml-0 text-white whitespace-nowrap' : 'mt-0.5 break-words'} leading-relaxed ${isMention ? 'text-accent font-medium' : 'text-gray-300'}`}>
                                             {msg.replyTo && config.orientation !== 'horizontal' && (
                                                 <div className="bg-white/5 inline-flex items-center rounded px-1.5 py-0.5 mb-1 mr-1 text-[0.8em] opacity-70">
                                                     <span>Replying to {typeof msg.replyTo === 'string' ? msg.replyTo : '@User'}</span>
