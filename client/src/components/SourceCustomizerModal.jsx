@@ -47,7 +47,10 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
             sub: '#9c27b0', // purple
             tip: '#4caf50', // green
             gift: '#2196f3', // blue
-        }
+        },
+        fadeOut: 0,
+        position: 'bottom_left',
+        reverse: false,
     });
 
     // Preview data state
@@ -95,6 +98,9 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
         if (!config.badges) params.append('badges', 'false');
         if (config.animation !== 'fade') params.append('animation', config.animation);
         if (config.orientation !== 'vertical') params.append('orientation', config.orientation);
+        if (config.fadeOut > 0) params.append('fade_out', config.fadeOut);
+        if (config.position) params.append('position', config.position);
+        if (config.reverse) params.append('reverse', 'true');
 
         if (type === 'activity') {
             if (config.activityColorMode !== 'simple') params.append('color_mode', config.activityColorMode);
@@ -149,6 +155,14 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
 
             const orient = params.get('orientation');
             if (orient) newConfig.orientation = orient;
+
+            const fade = params.get('fade_out');
+            if (fade) newConfig.fadeOut = parseInt(fade);
+
+            const pos = params.get('position');
+            if (pos) newConfig.position = pos;
+
+            if (params.get('reverse') === 'true') newConfig.reverse = true;
 
             // Activity Specific
             if (type === 'activity') {
@@ -242,6 +256,48 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                                         <button key={opt} onClick={() => setConfig({ ...config, orientation: opt })} className={`flex-1 text-xs py-1.5 rounded-md capitalize transition-colors ${config.orientation === opt ? 'bg-accent text-white font-bold' : 'text-gray-400 hover:text-gray-200'}`}>{opt}</button>
                                     ))}
                                 </div>
+                            </div>
+                            {/* Position & Order */}
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-500">Position</label>
+                                <select
+                                    value={config.position}
+                                    onChange={(e) => setConfig({ ...config, position: e.target.value })}
+                                    className="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-accent outline-none"
+                                >
+                                    {config.orientation === 'vertical' ? (
+                                        <>
+                                            <option value="top_left">Top Left</option>
+                                            <option value="top_right">Top Right</option>
+                                            <option value="bottom_left">Bottom Left</option>
+                                            <option value="bottom_right">Bottom Right</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="top">Top</option>
+                                            <option value="bottom">Bottom</option>
+                                        </>
+                                    )}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg border border-gray-800">
+                                <span className="text-sm text-gray-300">Reverse Order</span>
+                                <input type="checkbox" checked={config.reverse} onChange={(e) => setConfig({ ...config, reverse: e.target.checked })} className="accent-accent w-4 h-4" />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-500">Fade Out Messages</label>
+                                <select
+                                    value={config.fadeOut}
+                                    onChange={(e) => setConfig({ ...config, fadeOut: parseInt(e.target.value) })}
+                                    className="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-accent outline-none"
+                                >
+                                    <option value="0">Never</option>
+                                    <option value="15">15 Seconds</option>
+                                    <option value="30">30 Seconds</option>
+                                    <option value="60">60 Seconds</option>
+                                </select>
                             </div>
                             <div className="space-y-3 pt-2 border-t border-gray-800">
                                 <div className="flex items-center text-sm font-bold text-gray-300"><Palette className="w-4 h-4 mr-2 text-accent" />Background</div>
@@ -348,7 +404,7 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

@@ -20,6 +20,9 @@ const ActivityDock = ({ activities, previewConfig }) => {
         animation: searchParams.get('animation') || 'fade',
         orientation: searchParams.get('orientation') || 'vertical',
         isTransparent: searchParams.get('transparent') === 'true',
+        fadeOut: parseInt(searchParams.get('fade_out') || '0'),
+        position: searchParams.get('position') || 'bottom_left',
+        reverse: searchParams.get('reverse') === 'true',
         colorMode: searchParams.get('color_mode') || 'simple',
         eventColors: {
             follow: searchParams.get('col_follow') || '#e91e63',
@@ -90,6 +93,37 @@ const ActivityDock = ({ activities, previewConfig }) => {
         backgroundColor: 'transparent',
     };
 
+    // Layout Logic (Shared with ChatDock logic)
+    const getPositionClasses = () => {
+        if (config.orientation === 'horizontal') {
+            const align = config.position === 'top' ? 'items-start' : 'items-end'; // top/bottom of screen
+            return `flex-col ${align} justify-center`; // justify-center ensures it fills or centers if needed, but we want it sticky.
+            // Actually, if we use flex-col on wrapper:
+            // items-start = Top. items-end = Bottom.
+            // create a flex column, full height.
+        } else {
+            // Vertical
+            let justify = 'justify-end'; // Default bottom
+            let align = 'items-start';   // Default left
+
+            if (config.position.includes('top')) justify = 'justify-start';
+            if (config.position.includes('right')) align = 'items-end';
+            if (config.position.includes('center')) align = 'items-center';
+
+            return `flex-col ${justify} ${align}`;
+        }
+    };
+
+    const getListClasses = () => {
+        if (config.orientation === 'horizontal') {
+            const dir = config.reverse ? 'flex-row-reverse space-x-reverse' : 'flex-row';
+            return `${dir} items-center space-x-4 animate-scroll-left whitespace-nowrap`;
+        } else {
+            const dir = config.reverse ? 'flex-col-reverse space-y-reverse' : 'flex-col';
+            return `${dir} space-y-3 w-full scrollbar-thin scrollbar-thumb-gray-800`;
+        }
+    };
+
     // Auto-scroll (for vertical only)
     const endRef = React.useRef(null);
     useEffect(() => {
@@ -132,78 +166,83 @@ const ActivityDock = ({ activities, previewConfig }) => {
 
             {/* Activity List */}
             <div
-                className={`
-                    ${config.orientation === 'vertical'
-                        ? 'flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-800 w-full flex flex-col items-start'
-                        : 'flex items-center space-x-4 px-4 animate-scroll-left whitespace-nowrap'} 
-                `}
+                className={`flex-1 w-full overflow-hidden flex p-4 ${getPositionClasses()}`}
+            // Using style for horizontal ticker background if needed (not usually for activity dock transparent)
             >
-                {activities.length === 0 ? (
-                    <div className="text-center opacity-50 italic w-full">
-                        No recent activity...
-                    </div>
-                ) : (
-                    activities.map((act) => {
-                        // Icons based on type
-                        let Icon = Heart;
-                        let colorClass = "text-white"; // default white for colorful bgs
+                <div className={`flex ${getListClasses()}`}>
+                    {activities.length === 0 ? (
+                        <div className="text-center opacity-50 italic w-full">
+                            No recent activity...
+                        </div>
+                    ) : (
+                        activities.map((act) => {
+                            // Icons based on type
+                            let Icon = Heart;
+                            let colorClass = "text-white"; // default white for colorful bgs
 
-                        // In simple mode, we might want colored icons? 
-                        // But for now, let's keep icons white if background is colored, or colored if background is dark?
-                        // Let's stick to standard behavior: Icon color matches type usually.
-                        // However, if the BACKGROUND is the type color, the icon should probably be white.
+                            // In simple mode, we might want colored icons? 
+                            // But for now, let's keep icons white if background is colored, or colored if background is dark?
+                            // Let's stick to standard behavior: Icon color matches type usually.
+                            // However, if the BACKGROUND is the type color, the icon should probably be white.
 
-                        const isColorful = config.colorMode !== 'simple';
+                            const isColorful = config.colorMode !== 'simple';
 
-                        if (act.type === 'sub') { Icon = Star; }
-                        if (act.type === 'tip') { Icon = DollarSign; }
-                        if (act.type === 'gift') { Icon = Gift; }
+                            if (act.type === 'sub') { Icon = Star; }
+                            if (act.type === 'tip') { Icon = DollarSign; }
+                            if (act.type === 'gift') { Icon = Gift; }
 
-                        // If simple mode, use colored icons. If colorful/custom, use white icons (assuming bg is colored).
-                        if (!isColorful) {
-                            if (act.type === 'sub') colorClass = "text-purple-400";
-                            else if (act.type === 'tip') colorClass = "text-green-400";
-                            else if (act.type === 'gift') colorClass = "text-blue-400";
-                            else colorClass = "text-pink-400";
-                        }
+                            // If simple mode, use colored icons. If colorful/custom, use white icons (assuming bg is colored).
+                            if (!isColorful) {
+                                if (act.type === 'sub') colorClass = "text-purple-400";
+                                else if (act.type === 'tip') colorClass = "text-green-400";
+                                else if (act.type === 'gift') colorClass = "text-blue-400";
+                                else colorClass = "text-pink-400";
+                            }
 
-                        // Animations
-                        const animClass = config.animation === 'slide' ? 'animate-slide-in-right' :
-                            config.animation === 'none' ? '' : 'animate-fade-in';
+                            // Animations
+                            const animClass = config.animation === 'slide' ? 'animate-slide-in-right' :
+                                config.animation === 'none' ? '' : 'animate-fade-in';
 
-                        return (
-                            <div
-                                key={act.id}
-                                className={`${animClass} relative flex items-center rounded-lg p-2 shrink-0 border border-white/5 shadow-sm transition-all hover:scale-[1.02]`}
-                                style={getEventStyle(act.type)}
-                            >
-                                {/* Icon Badge */}
-                                {config.badges && (
-                                    <div className={`p-1.5 rounded-full bg-black/20 mr-3 ${colorClass}`}>
-                                        <Icon className="w-4 h-4" />
-                                    </div>
-                                )}
+                            const fadeStyle = config.fadeOut > 0 ? {
+                                animation: `${config.animation !== 'none' ? 'fadeIn 0.3s ease-out, ' : ''}fadeOut 1s ease-in forwards`,
+                                animationDelay: `0s, ${config.fadeOut}s`
+                            } : undefined;
 
-                                <div className="leading-tight pr-2">
-                                    <div className="flex items-center space-x-2">
-                                        <span className="font-bold text-white tracking-wide shadow-black drop-shadow-sm">{act.user}</span>
+                            return (
+                                <div
+                                    key={act.id}
+                                    className={`${config.animation !== 'none' && !config.fadeOut ? animClass : ''} relative flex items-center rounded-lg p-2 shrink-0 border border-white/5 shadow-sm transition-all hover:scale-[1.02]`}
+                                    style={{ ...getEventStyle(act.type), ...fadeStyle }}
+                                >
+                                    {/* Icon Badge */}
+                                    {config.badges && (
+                                        <div className={`p-1.5 rounded-full bg-black/20 mr-3 ${colorClass}`}>
+                                            <Icon className="w-4 h-4" />
+                                        </div>
+                                    )}
 
-                                        {config.badges && ( // Platform Icon small
-                                            <span className="text-[10px] uppercase text-white/50 bg-black/30 px-1 rounded backdrop-blur-[2px]">
-                                                {act.platform.slice(0, 2)}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="text-[0.9em] text-white/80 font-medium">
-                                        <span className="capitalize">{act.type}</span>
-                                        {act.details && <span className="text-white ml-1 font-bold">{act.details}</span>}
+                                    <div className="leading-tight pr-2">
+                                        <div className="flex items-center space-x-2">
+                                            <span className="font-bold text-white tracking-wide shadow-black drop-shadow-sm">{act.user}</span>
+
+                                            {config.badges && ( // Platform Icon small
+                                                <span className="text-[10px] uppercase text-white/50 bg-black/30 px-1 rounded backdrop-blur-[2px]">
+                                                    {act.platform.slice(0, 2)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-[0.9em] text-white/80 font-medium">
+                                            <span className="capitalize">{act.type}</span>
+                                            {act.details && <span className="text-white ml-1 font-bold">{act.details}</span>}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })
-                )}
-                {config.orientation === 'vertical' && <div ref={endRef} />}
+                            );
+                        })
+                    )}
+                    {config.orientation === 'vertical' && <div ref={endRef} />}
+                </div>
+
             </div>
 
             {/* Customizer Modal (Only for standalone Dock) */}

@@ -18,7 +18,10 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
         badges: searchParams.get('badges') !== 'false',
         animation: searchParams.get('animation') || 'fade',
         orientation: searchParams.get('orientation') || 'vertical',
-        isTransparent: searchParams.get('transparent') === 'true'
+        isTransparent: searchParams.get('transparent') === 'true',
+        fadeOut: parseInt(searchParams.get('fade_out') || '0'),
+        position: searchParams.get('position') || 'bottom_left',
+        reverse: searchParams.get('reverse') === 'true'
     };
 
     // Construct background color
@@ -106,9 +109,36 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
         alert("Copied Browser Source URL to clipboard!");
     };
 
+    // Layout Logic
+    const getPositionClasses = () => {
+        if (config.orientation === 'horizontal') {
+            const align = config.position === 'top' ? 'items-start' : 'items-end';
+            return `flex-col ${align} justify-center`;
+        } else {
+            let justify = 'justify-end';
+            let align = 'items-start';
+
+            if (config.position.includes('top')) justify = 'justify-start';
+            if (config.position.includes('right')) align = 'items-end';
+            if (config.position.includes('center')) align = 'items-center';
+
+            return `flex-col ${justify} ${align}`;
+        }
+    };
+
+    const getListClasses = () => {
+        if (config.orientation === 'horizontal') {
+            const dir = config.reverse ? 'flex-row-reverse space-x-reverse' : 'flex-row';
+            return `${dir} space-x-4 overflow-x-auto w-full`;
+        } else {
+            const dir = config.reverse ? 'flex-col-reverse space-y-reverse' : 'flex-col';
+            return `${dir} space-y-2 w-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-800`;
+        }
+    };
+
     return (
         <div
-            className={`flex flex-col h-full w-full ${config.orientation === 'horizontal' ? 'justify-end pb-8 pl-8' : ''} ${config.isTransparent ? '' : 'rounded-lg shadow-lg overflow-hidden'}`}
+            className={`flex h-full w-full overflow-hidden ${config.isTransparent ? '' : 'rounded-lg shadow-lg'} `}
             style={styles}
         >
             {/* Header (Hidden unless popout) */}
@@ -134,79 +164,90 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
 
             {/* Chat List */}
             <div
-                className={config.orientation === 'horizontal' ? 'w-full h-auto flex items-center overflow-x-auto whitespace-nowrap px-2 py-1.5' : 'flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-800'}
+                className={`flex-1 w-full overflow-hidden flex p-4 ${getPositionClasses()}`}
                 style={horizontalStripStyle}
             >
-                {messages.length === 0 ? (
-                    <div className="text-center opacity-50 mt-10 italic">
-                        No messages yet... waiting for chat events.
-                    </div>
-                ) : (
-                    messages.map((msg) => {
-                        const messageText = msg.text || '';
-                        const isMention = messageText.toLowerCase().includes((authStatus?.twitch?.username || '').toLowerCase());
+                <div className={`flex ${getListClasses()}`}>
+                    {messages.length === 0 ? (
+                        <div className="text-center opacity-50 mt-10 italic">
+                            No messages yet... waiting for chat events.
+                        </div>
+                    ) : (
+                        messages.map((msg) => {
+                            const messageText = msg.text || '';
+                            const isMention = messageText.toLowerCase().includes((authStatus?.twitch?.username || '').toLowerCase());
 
-                        // Theme-aware Mention Styling
-                        const mentionStyle = isMention
-                            ? "bg-accent/10 border-l-4 border-accent pl-3 -ml-3 rounded-r transition-colors duration-300"
-                            : "";
+                            // Theme-aware Mention Styling
+                            const mentionStyle = isMention
+                                ? "bg-accent/10 border-l-4 border-accent pl-3 -ml-3 rounded-r transition-colors duration-300"
+                                : "";
 
-                        // Animations
-                        const animClass = config.animation === 'slide' ? 'animate-slide-in-right' :
-                            config.animation === 'none' ? '' : 'animate-fade-in';
+                            // Animations
+                            const animClass = config.animation === 'slide' ? 'animate-slide-in-right' :
+                                config.animation === 'none' ? '' : 'animate-fade-in';
 
-                        return (
-                            <div key={msg.id} className={`${animClass} group ${mentionStyle} ${config.orientation === 'horizontal' ? 'inline-flex items-center space-x-2 mr-6 bg-black/20 px-3 py-1 rounded-full' : ''}`}>
-                                <div className={`flex items-baseline space-x-2 text-main ${config.orientation === 'horizontal' ? 'flex-shrink-0' : ''}`} style={{ fontSize: '0.9em' }}> {/* Scale meta text slightly smaller */}
-                                    {/* Platform Badge */}
-                                    {config.badges && (
-                                        <span className={`
+                            const fadeStyle = config.fadeOut > 0 ? {
+                                animation: `${config.animation !== 'none' ? 'fadeIn 0.3s ease-out, ' : ''}fadeOut 1s ease-in forwards`,
+                                animationDelay: `0s, ${config.fadeOut}s`
+                            } : undefined;
+
+                            return (
+                                <div
+                                    key={msg.id}
+                                    className={`${config.animation !== 'none' && !config.fadeOut ? animClass : ''} group ${mentionStyle} ${config.orientation === 'horizontal' ? 'inline-flex items-center space-x-2 mr-6 bg-black/20 px-3 py-1 rounded-full' : ''}`}
+                                    style={fadeStyle}
+                                >
+                                    <div className={`flex items-baseline space-x-2 text-main ${config.orientation === 'horizontal' ? 'flex-shrink-0' : ''}`} style={{ fontSize: '0.9em' }}> {/* Scale meta text slightly smaller */}
+                                        {/* Platform Badge */}
+                                        {config.badges && (
+                                            <span className={`
                                             px-1.5 py-0.5 rounded text-[0.7em] uppercase font-bold tracking-wider
                                             ${msg.platform === 'twitch' ? 'bg-purple-900/40 text-purple-400 border border-purple-500/30' :
-                                                msg.platform === 'youtube' ? 'bg-red-900/40 text-red-400 border border-red-500/30' :
-                                                    msg.platform === 'kick' ? 'bg-green-900/40 text-green-400 border border-green-500/30' :
-                                                        'bg-pink-900/40 text-pink-400 border border-pink-500/30'}
+                                                    msg.platform === 'youtube' ? 'bg-red-900/40 text-red-400 border border-red-500/30' :
+                                                        msg.platform === 'kick' ? 'bg-green-900/40 text-green-400 border border-green-500/30' :
+                                                            'bg-pink-900/40 text-pink-400 border border-pink-500/30'}
                                         `}>
-                                            {msg.platform}
+                                                {msg.platform}
+                                            </span>
+                                        )}
+
+                                        {/* Username */}
+                                        <span className="font-bold text-white whitespace-nowrap">
+                                            {msg.user}
                                         </span>
-                                    )}
 
-                                    {/* Username */}
-                                    <span className="font-bold text-white whitespace-nowrap">
-                                        {msg.user}
-                                    </span>
+                                        {/* Timestamp (Hide in horizontal mode) */}
+                                        {config.orientation !== 'horizontal' && (
+                                            <span className="opacity-50 text-[0.8em]">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        )}
 
-                                    {/* Timestamp (Hide in horizontal mode) */}
-                                    {config.orientation !== 'horizontal' && (
-                                        <span className="opacity-50 text-[0.8em]">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                    )}
+                                        {/* Reply Button (Only show if not transparent/OBS) */}
+                                        {!config.isTransparent && !previewConfig && ['twitch', 'kick', 'youtube'].includes(msg.platform) && (
+                                            <button
+                                                onClick={() => setReplyingTo(msg)}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-accent hover:underline ml-2"
+                                            >
+                                                Reply
+                                            </button>
+                                        )}
+                                    </div>
 
-                                    {/* Reply Button (Only show if not transparent/OBS) */}
-                                    {!config.isTransparent && !previewConfig && ['twitch', 'kick', 'youtube'].includes(msg.platform) && (
-                                        <button
-                                            onClick={() => setReplyingTo(msg)}
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-accent hover:underline ml-2"
-                                        >
-                                            Reply
-                                        </button>
-                                    )}
+                                    {/* Message Content */}
+                                    <div className={`${config.orientation === 'horizontal' ? 'ml-0 text-white truncate max-w-[300px]' : 'mt-0.5 break-words'} leading-relaxed ${isMention ? 'text-accent font-medium' : 'text-gray-300'}`}>
+                                        {msg.replyTo && config.orientation !== 'horizontal' && (
+                                            <div className="bg-white/5 inline-flex items-center rounded px-1.5 py-0.5 mb-1 mr-1 text-[0.8em] opacity-70">
+                                                <span>Replying to {typeof msg.replyTo === 'string' ? msg.replyTo : '@User'}</span>
+                                            </div>
+                                        )}
+                                        {config.orientation === 'horizontal' && <span className="text-gray-500 mr-2">:</span>}
+                                        {parseEmotes(messageText, msg.emotes)}
+                                    </div>
                                 </div>
-
-                                {/* Message Content */}
-                                <div className={`${config.orientation === 'horizontal' ? 'ml-0 text-white truncate max-w-[300px]' : 'mt-0.5 break-words'} leading-relaxed ${isMention ? 'text-accent font-medium' : 'text-gray-300'}`}>
-                                    {msg.replyTo && config.orientation !== 'horizontal' && (
-                                        <div className="bg-white/5 inline-flex items-center rounded px-1.5 py-0.5 mb-1 mr-1 text-[0.8em] opacity-70">
-                                            <span>Replying to {typeof msg.replyTo === 'string' ? msg.replyTo : '@User'}</span>
-                                        </div>
-                                    )}
-                                    {config.orientation === 'horizontal' && <span className="text-gray-500 mr-2">:</span>}
-                                    {parseEmotes(messageText, msg.emotes)}
-                                </div>
-                            </div>
-                        );
-                    })
-                )}
-                <div ref={endRef} />
+                            );
+                        })
+                    )}
+                    <div ref={endRef} />
+                </div>
             </div>
 
             {/* Input Area (Hidden unless popout) */}
