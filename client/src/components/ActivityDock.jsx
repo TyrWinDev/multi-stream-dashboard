@@ -106,11 +106,11 @@ const ActivityDock = ({ activities, previewConfig }) => {
 
     return (
         <div
-            className={`flex ${config.orientation === 'vertical' ? 'flex-col h-full overflow-hidden' : 'flex-row items-center h-full overflow-hidden w-full'}`}
+            className={`flex ${config.orientation === 'vertical' ? 'flex-col h-full overflow-hidden' : 'flex-row items-end h-full overflow-hidden w-full'}`}
             style={containerStyles}
         >
-            {/* Header (Hidden if transparent/preview) */}
-            {!config.isTransparent && !previewConfig && (
+            {/* Header (Hidden unless popout) */}
+            {isPopout && (
                 <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-secondary shrink-0 w-full">
                     <h2 className="font-bold text-main">Activity Feed</h2>
                     <div className="flex items-center space-x-2">

@@ -70,6 +70,37 @@ const handleTwitchCallback = async (req, res) => {
     }
 };
 
+const refreshTwitchToken = async () => {
+    const current = tokens.twitch;
+    if (!current || !current.refreshToken) {
+        throw new Error("No refresh token available");
+    }
+
+    try {
+        const resp = await axios.post(TWITCH_TOKEN_URL, null, {
+            params: {
+                client_id: process.env.TWITCH_CLIENT_ID,
+                client_secret: process.env.TWITCH_CLIENT_SECRET,
+                grant_type: 'refresh_token',
+                refresh_token: current.refreshToken
+            }
+        });
+
+        tokens.twitch = {
+            accessToken: resp.data.access_token,
+            refreshToken: resp.data.refresh_token, // Sometimes usually new, sometimes same
+            expiry: Date.now() + (resp.data.expires_in * 1000)
+        };
+        saveTokens();
+        console.log("Twitch Token Refreshed Successfully");
+        return tokens.twitch.accessToken;
+
+    } catch (e) {
+        console.error("Twitch Refresh Failed:", e.response?.data || e.message);
+        throw e;
+    }
+};
+
 // --- Kick OAuth (PKCE) ---
 const KICK_AUTH_URL = 'https://id.kick.com/oauth/authorize';
 const KICK_TOKEN_URL = 'https://id.kick.com/oauth/token';
@@ -206,6 +237,7 @@ module.exports = {
     setToken,
     startTwitchAuth,
     handleTwitchCallback,
+    refreshTwitchToken,
     startKickAuth,
     handleKickCallback,
     startYoutubeAuth,

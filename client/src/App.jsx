@@ -6,7 +6,7 @@ import DashboardLayout from './components/DashboardLayout';
 import ChatDock from './components/ChatDock';
 import ActivityDock from './components/ActivityDock';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://localhost:3001';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
 const PlatformIcon = ({ platform }) => {
     const colors = {
@@ -220,7 +220,7 @@ function App() {
     }, [activities]);
 
     return (
-        <div className={`h-screen w-full bg-primary text-main font-sans overflow-hidden theme-${theme}`}>
+        <div className={`h-screen w-full text-main font-sans overflow-hidden theme-${theme}`}>
             <Routes>
                 {/* Main Dashboard Route */}
                 <Route path="/" element={

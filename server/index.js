@@ -74,7 +74,7 @@ const emitActivity = (type, platform, user, details) => {
 
 // --- Platform Connectors ---
 
-const { getTokens, setToken, startTwitchAuth, handleTwitchCallback, startKickAuth, handleKickCallback, startYoutubeAuth, handleYoutubeCallback } = require('./auth');
+const { getTokens, setToken, startTwitchAuth, handleTwitchCallback, refreshTwitchToken, startKickAuth, handleKickCallback, startYoutubeAuth, handleYoutubeCallback } = require('./auth');
 
 // ... (config) ...
 
@@ -84,11 +84,30 @@ app.get('/api/auth/twitch', (req, res) => startTwitchAuth(res));
 app.get('/api/auth/twitch/callback', handleTwitchCallback);
 
 app.get('/api/auth/kick', (req, res) => startKickAuth(res));
-app.get('/api/auth/kick', (req, res) => startKickAuth(res));
 app.get('/api/auth/kick/callback', handleKickCallback);
 
 app.get('/api/auth/youtube', (req, res) => startYoutubeAuth(res));
 app.get('/api/auth/youtube/callback', handleYoutubeCallback);
+
+// Diagnostic Endpoint
+app.get('/api/diag', (req, res) => {
+    res.json({
+        status: 'ok',
+        time: new Date().toISOString(),
+        env: {
+            NODE_ENV: process.env.NODE_ENV || 'development',
+            PORT: process.env.PORT || 3001,
+            CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+            SERVER_URL: process.env.SERVER_URL || 'https://localhost:3001 (auto)',
+        },
+        platforms: {
+            twitch: !!process.env.TWITCH_CLIENT_ID,
+            kick: !!process.env.KICK_CLIENT_ID,
+            youtube: !!process.env.YOUTUBE_CLIENT_ID,
+            tiktok: !!process.env.TIKTOK_USER
+        }
+    });
+});
 
 // In-memory session store (simple)
 let kickSession = { chatroomId: null, username: null };
@@ -225,17 +244,60 @@ const initTwitch = async () => {
         channels: channels
     };
 
+    const logToFile = (msg) => {
+        try { fs.appendFileSync('server_debug.log', `[${new Date().toISOString()}] ${msg}\n`); } catch (e) { }
+    };
+
+    logToFile(`Twitch: Attempting to connect. Channels: ${JSON.stringify(channels)}`);
+    logToFile(`Twitch: Token present? ${!!tokens.accessToken}`);
+
     try {
         twitchClient = new tmi.Client(opts);
+
+        twitchClient.on('connecting', (address, port) => {
+            logToFile(`Twitch: Connecting to ${address}:${port}...`);
+        });
+
+        twitchClient.on('connected', (address, port) => {
+            logToFile(`Twitch: Connected to ${address}:${port}`);
+            console.log("Twitch Connected!");
+        });
+
+        twitchClient.on('disconnected', (reason) => {
+            logToFile(`Twitch: Disconnected! Reason: ${reason}`);
+            // If disconnected, maybe token expired? (Simplistic retry)
+            // tmi.js auto-reconnects, but if auth fails it might stop.
+        });
+
+        // Handle specifics
+        twitchClient.on('notice', async (channel, msgid, message) => {
+            if (msgid === 'msg_channel_suspended' || msgid === 'login_authentication_failed') {
+                console.error("Twitch Auth Failed (Notice):", message);
+                // Trigger refresh ??
+                await refreshTwitchToken().catch(e => console.error("Refresh failed"));
+            }
+        });
+
         await twitchClient.connect();
 
         twitchClient.on('message', (channel, tags, message, self) => {
+            logToFile(`[Twitch RAW] ${tags['display-name']}: ${message}`);
             if (self) return;
             normalizeMsg('twitch', tags['display-name'] || tags['username'], message, tags['color'], null, tags['emotes']);
         });
-        console.log("Twitch Connected!");
+
     } catch (e) {
-        console.error("Twitch Connection Error:", e);
+        logToFile(`Twitch Connection Error: ${e.message}`);
+        console.error("Twitch Connection Error:", e.message);
+
+        // RETRY WITH REFRESH
+        console.log("Twitch: Attempting to refresh token and reconnect...");
+        try {
+            await refreshTwitchToken();
+            initTwitch(); // Recursively call init (dangerous if loop, but refresh throws if fails)
+        } catch (refreshErr) {
+            console.error("Twitch: Critical Auth Failure. Please re-login.");
+        }
     }
 };
 
@@ -572,31 +634,33 @@ if (process.env.STREAMELEMENTS_JWT) {
 // --- ASYNC STARTUP (Moved to Bottom) ---
 (async () => {
     try {
-        let server;
+        // --- HYBRID SERVER SETUP ---
+        const HTTPS_PORT = process.env.PORT || 3001;
+        const HTTP_PORT = parseInt(HTTPS_PORT) + 1; // 3002 usually
 
-        if (process.env.NODE_ENV === 'production' && process.env.DISABLE_SSL === 'true') {
-            // Production Mode (Running behind Nginx/Proxy which handles SSL)
-            server = http.createServer(app);
-            console.log('Starting in PRODUCTION mode (HTTP)');
-        } else {
-            // Development Mode (Self-Signed HTTPS)
-            console.log('Starting in DEVELOPMENT mode (Self-Signed HTTPS)');
-            const attrs = [{ name: 'commonName', value: 'localhost' }];
-            const pems = await selfsigned.generate(attrs, { days: 365 });
+        // 1. Prepare HTTPS (Self-Signed)
+        console.log('Generating Self-Signed Certs for HTTPS...');
+        const attrs = [{ name: 'commonName', value: 'localhost' }];
+        const pems = await selfsigned.generate(attrs, { days: 365, keySize: 2048, algorithm: 'sha256' });
 
-            server = https.createServer({
-                key: pems.private,
-                cert: pems.cert
-            }, app);
-        }
+        const httpsServer = https.createServer({
+            key: pems.private,
+            cert: pems.cert
+        }, app);
 
-        io = new Server(server, {
+        // 2. Prepare HTTP
+        const httpServer = http.createServer(app);
+
+        // 3. Setup Socket.IO (Bind to BOTH)
+        io = new Server({
             cors: {
                 origin: CLIENT_URL,
                 methods: ["GET", "POST"],
                 credentials: true
             }
         });
+        io.attach(httpsServer);
+        io.attach(httpServer);
 
         // Connection handling
         io.on('connection', (socket) => {
@@ -613,7 +677,7 @@ if (process.env.STREAMELEMENTS_JWT) {
                 }
             });
 
-            // Handle sending messages
+            // Handle sending messages (Duplicated internal logic, but shared IO scope)
             socket.on('send-message', async ({ platform, text }) => {
                 console.log(`Sending to ${platform}: ${text}`);
                 let sentToLoopback = false;
@@ -621,23 +685,19 @@ if (process.env.STREAMELEMENTS_JWT) {
                 try {
                     // TWITCH
                     if ((platform === 'twitch' || platform === 'all') && twitchClient) {
-                        // Send to Twitch
                         twitchClient.say(process.env.TWITCH_CHANNEL, text).catch(err => {
                             console.error("Twitch Send Error:", err);
                         });
-
-                        // Manually loopback message to UI (since tmi.js doesn't emit 'message' for self)
                         if (!sentToLoopback) {
                             const twitchUser = getTokens('twitch')?.username || process.env.TWITCH_CHANNEL || 'Me';
                             normalizeMsg('twitch', twitchUser, text, '#FFFFFF', null, null);
-                            sentToLoopback = true; // Avoid double-echo if sending to multiple
+                            sentToLoopback = true;
                         }
                     }
 
                     // KICK (Public v1 API)
                     if (platform === 'kick' || platform === 'all') {
                         const kTokens = getTokens('kick');
-
                         if (kTokens && kTokens.accessToken && kickSession.userId) {
                             try {
                                 await axios.post('https://api.kick.com/public/v1/chat', {
@@ -652,7 +712,6 @@ if (process.env.STREAMELEMENTS_JWT) {
                                     }
                                 });
                                 console.log("Kick Message Sent (v1/chat)!");
-
                                 if (!sentToLoopback) {
                                     normalizeMsg('kick', kickSession.username || 'Me', text, '#00FF00', null, null);
                                     sentToLoopback = true;
@@ -660,8 +719,6 @@ if (process.env.STREAMELEMENTS_JWT) {
                             } catch (kErr) {
                                 console.error("Kick Send v1 Error:", kErr.response?.data || kErr.message);
                             }
-                        } else {
-                            console.warn("Kick: Cannot send. Missing Token or User ID. (Try refreshing page).");
                         }
                     }
 
@@ -696,10 +753,18 @@ if (process.env.STREAMELEMENTS_JWT) {
             });
         });
 
-        server.listen(PORT, () => {
-            console.log(`Unified Stream Hub running on port ${PORT} (HTTPS)`);
-            console.log(`Accept self-signed cert at: https://localhost:${PORT}`);
+        // 4. Start Listeners
+        httpsServer.listen(HTTPS_PORT, () => {
+            console.log(`\n🔒 HTTPS Server running on port ${HTTPS_PORT} (FOR AUTH)`);
+            console.log(`   URL: https://localhost:${HTTPS_PORT}`);
         });
+
+        httpServer.listen(HTTP_PORT, () => {
+            console.log(`\n🔓 HTTP Server running on port ${HTTP_PORT} (FOR OBS/CLIENT)`);
+            console.log(`   URL: http://localhost:${HTTP_PORT}`);
+        });
+
+        console.log(`\n⚠️  SSL NOTICE: You may need to visit https://localhost:${HTTPS_PORT}/api/diag to accept the certificate for Auth to work.`);
 
         // Initialize Platforms
         initTwitch();

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ExternalLink, RefreshCw, Power } from 'lucide-react';
+import { X, ExternalLink, RefreshCw, Power, Settings, Lock } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:3001';
 
@@ -30,9 +30,9 @@ const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggle
     const status = authStatus || { twitch: false, kick: false };
 
     // ... (connect handlers remain the same) ...
-    const handleConnect = (platform) => {
+    const handleConnect = (platform, args = null) => {
         if (platform === 'tiktok') {
-            const username = prompt("Enter TikTok Username (start with @):");
+            const username = args || prompt("Enter TikTok Username (start with @):");
             if (username) window.location.assign(`${API_URL}/api/auth/tiktok?username=${username.replace('@', '')}`);
         } else {
             window.location.assign(`${API_URL}/api/auth/${platform}`);
@@ -153,7 +153,7 @@ const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggle
                     <div className="space-y-2">
                         {/* Kick Button */}
                         <button
-                            onClick={() => status.kick?.connected ? handleDisconnect('kick') : connectKick()}
+                            onClick={() => status.kick?.connected ? handleDisconnect('kick') : handleConnect('kick')}
                             className={`w-full p-2 rounded transition border ${status.kick?.connected
                                 ? 'bg-green-900/10 border-green-900/50 text-green-100'
                                 : 'bg-green-900/20 border-green-900 hover:bg-green-900/40 text-green-300'
@@ -164,7 +164,7 @@ const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggle
 
                         {/* Twitch Button */}
                         <button
-                            onClick={() => status.twitch?.connected ? handleDisconnect('twitch') : connectTwitch()}
+                            onClick={() => status.twitch?.connected ? handleDisconnect('twitch') : handleConnect('twitch')}
                             className={`w-full p-2 rounded transition border ${status.twitch?.connected
                                 ? 'bg-purple-900/10 border-purple-900/50 text-purple-100'
                                 : 'bg-purple-900/20 border-purple-900 hover:bg-purple-900/40 text-purple-300'
@@ -175,7 +175,7 @@ const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggle
 
                         {/* YouTube Button */}
                         <button
-                            onClick={() => status.youtube?.connected ? handleDisconnect('youtube') : connectYoutube()}
+                            onClick={() => status.youtube?.connected ? handleDisconnect('youtube') : handleConnect('youtube')}
                             className={`w-full p-2 rounded transition border ${status.youtube?.connected
                                 ? 'bg-red-900/10 border-red-900/50 text-red-100'
                                 : 'bg-red-900/20 border-red-900 hover:bg-red-900/40 text-red-300'
@@ -218,11 +218,11 @@ const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggle
                                         style={{ minWidth: 0 }}
                                         className="flex-1 bg-black/30 border border-pink-900/50 rounded px-2 py-1 text-sm text-pink-100 focus:outline-none focus:border-pink-500"
                                         onKeyDown={(e) => {
-                                            if (e.key === 'Enter') handleTikTokConnect(e.target.value);
+                                            if (e.key === 'Enter') handleConnect('tiktok', e.target.value);
                                         }}
                                     />
                                     <button
-                                        onClick={() => handleTikTokConnect(document.getElementById('tiktok-input').value)}
+                                        onClick={() => handleConnect('tiktok', document.getElementById('tiktok-input').value)}
                                         className="bg-pink-600 hover:bg-pink-700 text-white text-xs px-2 py-1 rounded transition whitespace-nowrap"
                                     >
                                         Connect

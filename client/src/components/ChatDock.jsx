@@ -111,8 +111,8 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
             className={`flex flex-col h-full w-full ${config.orientation === 'horizontal' ? 'justify-end pb-8 pl-8' : ''} ${config.isTransparent ? '' : 'rounded-lg shadow-lg overflow-hidden'}`}
             style={styles}
         >
-            {/* Header (Hidden if transparent/preview) */}
-            {!config.isTransparent && !previewConfig && (
+            {/* Header (Hidden unless popout) */}
+            {isPopout && (
                 <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-secondary">
                     <h2 className="font-bold text-main">Stream Chat</h2>
                     <div className="flex items-center space-x-2">
@@ -209,8 +209,8 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
                 <div ref={endRef} />
             </div>
 
-            {/* Input Area (Hidden if transparent or preview) */}
-            {!config.isTransparent && !previewConfig && (
+            {/* Input Area (Hidden unless popout) */}
+            {isPopout && (
                 <div className="p-4 border-t border-border bg-tertiary">
                     <ChatInput
                         onSend={sendMessage}
