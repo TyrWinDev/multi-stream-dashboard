@@ -155,7 +155,7 @@ const ActivityDock = ({ activities, previewConfig }) => {
         >
             {/* Inner Container */}
             <div
-                className={`flex flex-col w-full ${config.orientation === 'vertical' ? 'max-h-full shadow-lg overflow-hidden' : 'h-full'}`}
+                className={`flex flex-col ${config.orientation === 'vertical' ? 'max-h-full w-auto max-w-sm shadow-lg overflow-hidden' : 'h-full w-full'}`}
                 style={config.orientation === 'vertical' ? boxStyles : {}}
             >
                 {/* Header (Hidden unless popout) */}

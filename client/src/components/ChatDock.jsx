@@ -151,7 +151,7 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
         >
             {/* Inner Container (Background applied here) */}
             <div
-                className={`flex flex-col w-full ${config.orientation === 'vertical' ? 'max-h-full shadow-lg overflow-hidden' : 'h-full'}`}
+                className={`flex flex-col ${config.orientation === 'vertical' ? 'max-h-full w-80 md:w-96 shadow-lg overflow-hidden' : 'h-full w-full'}`}
                 style={boxStyles}
             >
                 {/* Header (Hidden unless popout) */}
