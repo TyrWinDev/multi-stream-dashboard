@@ -21,7 +21,8 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
         isTransparent: searchParams.get('transparent') === 'true',
         fadeOut: parseInt(searchParams.get('fade_out') || '0'),
         position: searchParams.get('position') || 'bottom_left',
-        reverse: searchParams.get('reverse') === 'true'
+        reverse: searchParams.get('reverse') === 'true',
+        rounded: searchParams.get('rounded') !== 'false'
     };
 
     // Construct background color
@@ -96,13 +97,13 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
     // Inner Container Style (The actual "Chat Box")
     const boxStyles = {
         backgroundColor: config.orientation === 'vertical' ? getBackgroundColor() : 'transparent',
-        borderRadius: config.isTransparent ? '0px' : '8px',
+        borderRadius: config.rounded ? '8px' : '0px',
     };
 
     // Style for the horizontal strip specifically
     const horizontalStripStyle = config.orientation === 'horizontal' ? {
         backgroundColor: getBackgroundColor(),
-        borderRadius: '8px', // Optional: rounded edges for the strip
+        borderRadius: config.rounded ? '8px' : '0px',
     } : {};
 
     // Auto-scroll logic (simplified for dock)

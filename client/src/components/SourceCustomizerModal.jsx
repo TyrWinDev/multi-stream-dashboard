@@ -53,6 +53,7 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
         reverse: false,
         animation: 'fade', // Fix: Initialize animation to prevent undefined in URL
         badges: true, // Fix: Initialize badges defaults to true
+        rounded: true,
     });
 
     // Preview data state
@@ -102,7 +103,9 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
         if (config.orientation !== 'vertical') params.append('orientation', config.orientation);
         if (config.fadeOut > 0) params.append('fade_out', config.fadeOut);
         if (config.position) params.append('position', config.position);
+        if (config.position) params.append('position', config.position);
         if (config.reverse) params.append('reverse', 'true');
+        if (!config.rounded) params.append('rounded', 'false');
 
         if (type === 'activity') {
             if (config.activityColorMode !== 'simple') params.append('color_mode', config.activityColorMode);
@@ -165,6 +168,7 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
             if (pos) newConfig.position = pos;
 
             if (params.get('reverse') === 'true') newConfig.reverse = true;
+            if (params.get('rounded') === 'false') newConfig.rounded = false;
 
             // Activity Specific
             if (type === 'activity') {
@@ -281,6 +285,11 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                                         </>
                                     )}
                                 </select>
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg border border-gray-800">
+                                <span className="text-sm text-gray-300">Rounded Corners</span>
+                                <input type="checkbox" checked={config.rounded} onChange={(e) => setConfig({ ...config, rounded: e.target.checked })} className="accent-accent w-4 h-4" />
                             </div>
 
                             <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg border border-gray-800">
