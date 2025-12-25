@@ -12,13 +12,27 @@ const TimerWidget = ({ socket, state }) => {
 
     useEffect(() => {
         let interval;
-        if (state?.isRunning && displayTime > 0) {
+        if (state?.isRunning) {
             interval = setInterval(() => {
-                setDisplayTime(prev => Math.max(0, prev - 1));
+                if (state.mode === 'countup') {
+                    setDisplayTime(prev => prev + 1);
+                } else {
+                    setDisplayTime(prev => Math.max(0, prev - 1));
+                }
             }, 1000);
         }
         return () => clearInterval(interval);
-    }, [state?.isRunning]);
+    }, [state?.isRunning, state?.mode]);
+
+    // Alarm Logic
+    useEffect(() => {
+        if (state?.mode === 'countdown' && state?.alarmEnabled && state?.remaining === 0 && !state?.isRunning && displayTime === 0) {
+            // Play Alarm
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); // Bell Alarm
+            audio.volume = 0.6;
+            audio.play().catch(e => console.log('Alarm play failed', e));
+        }
+    }, [state?.remaining, state?.isRunning, state?.mode, state?.alarmEnabled, displayTime]);
 
     const formatTime = (seconds) => {
         const m = Math.floor(seconds / 60);

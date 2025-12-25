@@ -173,10 +173,18 @@ const WidgetDashboard = ({ socket, widgetState }) => {
                 {/* TIMER */}
                 <Card title="Timer">
                     <div className="flex flex-col items-center">
+                        <input
+                            type="text"
+                            placeholder="Timer Title"
+                            className="bg-secondary border border-border text-main rounded text-center mb-4 w-2/3 p-1 focus:outline-none focus:border-accent font-bold"
+                            defaultValue={widgetState.timer.title}
+                            onBlur={(e) => socket.emit('widget-action', { type: 'timer-update', payload: { title: e.target.value } })}
+                        />
+
                         <div className="text-5xl font-mono font-bold text-main mb-4">
                             {Math.floor(widgetState.timer.remaining / 60)}:{(widgetState.timer.remaining % 60).toString().padStart(2, '0')}
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 mb-4">
                             <button onClick={toggleTimer} className={`p-3 rounded-full text-white transition-colors ${widgetState.timer.isRunning ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'}`}>
                                 {widgetState.timer.isRunning ? <Pause /> : <Play />}
                             </button>
@@ -184,17 +192,47 @@ const WidgetDashboard = ({ socket, widgetState }) => {
                                 <RotateCcw />
                             </button>
                         </div>
-                        <div className="mt-4 w-full">
-                            <label className="text-xs text-muted uppercase font-bold">Set Duration (min)</label>
-                            <input
-                                type="number"
-                                className="w-full mt-1 bg-secondary border border-border text-main p-2 rounded focus:outline-none focus:border-accent"
-                                defaultValue={widgetState.timer.duration / 60}
-                                onBlur={(e) => {
-                                    const mins = parseInt(e.target.value) || 5;
-                                    socket.emit('widget-action', { type: 'timer-update', payload: { duration: mins * 60, remaining: mins * 60 } });
-                                }}
-                            />
+
+                        <div className="w-full space-y-3 px-2">
+                            <div className="flex justify-between items-center text-xs text-muted">
+                                <span>Mode:</span>
+                                <select
+                                    className="bg-secondary border border-border rounded p-1 text-main"
+                                    value={widgetState.timer.mode || 'countdown'}
+                                    onChange={(e) => {
+                                        socket.emit('widget-action', { type: 'timer-update', payload: { mode: e.target.value, isRunning: false } });
+                                    }}
+                                >
+                                    <option value="countdown">Countdown</option>
+                                    <option value="countup">Count Up</option>
+                                </select>
+                            </div>
+
+                            {widgetState.timer.mode === 'countdown' && (
+                                <div className="text-xs text-muted">
+                                    <label className="uppercase font-bold block mb-1">Set Duration (min)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-secondary border border-border text-main p-2 rounded focus:outline-none focus:border-accent"
+                                        defaultValue={widgetState.timer.duration / 60}
+                                        onBlur={(e) => {
+                                            const mins = parseInt(e.target.value) || 5;
+                                            socket.emit('widget-action', { type: 'timer-update', payload: { duration: mins * 60, remaining: mins * 60 } });
+                                        }}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="flex justify-between items-center text-xs text-muted">
+                                <label className="cursor-pointer select-none flex items-center gap-1">
+                                    <input
+                                        type="checkbox"
+                                        checked={widgetState.timer.alarmEnabled || false}
+                                        onChange={(e) => socket.emit('widget-action', { type: 'timer-update', payload: { alarmEnabled: e.target.checked } })}
+                                    />
+                                    Play Alarm on Zero
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </Card>

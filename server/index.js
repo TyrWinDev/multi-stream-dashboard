@@ -125,7 +125,7 @@ let kickSession = { chatroomId: null, username: null };
 let widgetState = {
     global: { theme: 'default', font: 'sans', transparent: false, animation: 'none' },
     counter: { count: 0, title: 'Counter', step: 1, soundEnabled: true },
-    timer: { duration: 300, remaining: 300, isRunning: false, title: 'Timer' },
+    timer: { duration: 300, remaining: 300, isRunning: false, title: 'Timer', mode: 'countdown', alarmEnabled: true },
     social: { handles: [{ platform: 'twitter', handle: '@User' }], currentIndex: 0, title: 'Socials' },
     progress: { current: 0, max: 100, title: 'Goal' },
     goals: { items: [{ id: 1, text: 'Goal 1', completed: false }], title: 'Goals' },
@@ -136,20 +136,24 @@ let widgetState = {
 
 // Global Timer Interval
 setInterval(() => {
-    if (widgetState.timer.isRunning && widgetState.timer.remaining > 0) {
-        widgetState.timer.remaining--;
+    if (widgetState.timer.isRunning) {
+        if (widgetState.timer.mode === 'countup') {
+            widgetState.timer.remaining++; // In countup, 'remaining' acts as 'elapsed'
+        } else {
+            // Countdown
+            if (widgetState.timer.remaining > 0) {
+                widgetState.timer.remaining--;
+            }
+            // Auto-stop at 0
+            if (widgetState.timer.remaining === 0) {
+                widgetState.timer.isRunning = false;
+                if (io) io.emit('widget-event', { type: 'timer-msg', payload: 'Timer Finished!' }); // Signal for alarm
+            }
+        }
 
         // Broadcast update every second
         if (io) {
-            io.emit('widget-event', { type: 'timer-update', payload: { remaining: widgetState.timer.remaining } });
-        }
-
-        // Auto-stop at 0
-        if (widgetState.timer.remaining === 0) {
-            widgetState.timer.isRunning = false;
-            if (io) {
-                io.emit('widget-event', { type: 'timer-update', payload: { isRunning: false } });
-            }
+            io.emit('widget-event', { type: 'timer-update', payload: { remaining: widgetState.timer.remaining, isRunning: widgetState.timer.isRunning } });
         }
     }
 }, 1000);
