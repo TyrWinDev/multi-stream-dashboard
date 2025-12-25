@@ -128,10 +128,44 @@ const WidgetDashboard = ({ socket, widgetState }) => {
                 {/* COUNTER */}
                 <Card title="Counter">
                     <div className="flex flex-col items-center">
+                        {/* Title Input */}
+                        <input
+                            type="text"
+                            placeholder="Counter Title"
+                            className="bg-secondary border border-border text-main rounded text-center mb-4 w-2/3 p-1 focus:outline-none focus:border-accent font-bold"
+                            defaultValue={widgetState.counter.title}
+                            onBlur={(e) => socket.emit('widget-action', { type: 'counter-update', payload: { title: e.target.value } })}
+                        />
+
                         <div className="text-6xl font-black text-accent mb-4 drop-shadow">{widgetState.counter.count}</div>
-                        <div className="flex gap-4">
-                            <button onClick={() => updateCounter(-1)} className="bg-secondary hover:bg-border text-main p-3 rounded-full transition-colors"><Minus /></button>
-                            <button onClick={() => updateCounter(1)} className="bg-accent hover:bg-accent-hover text-white p-3 rounded-full transition-colors"><Plus /></button>
+
+                        <div className="flex gap-4 mb-4">
+                            <button onClick={() => updateCounter(-1 * (widgetState.counter.step || 1))} className="bg-secondary hover:bg-border text-main p-3 rounded-full transition-colors"><Minus /></button>
+                            <button onClick={() => updateCounter(1 * (widgetState.counter.step || 1))} className="bg-accent hover:bg-accent-hover text-white p-3 rounded-full transition-colors"><Plus /></button>
+                        </div>
+
+                        {/* Settings Row */}
+                        <div className="flex gap-2 items-center text-xs text-muted w-full px-4 justify-between">
+                            <div className="flex items-center gap-1">
+                                <span>Step:</span>
+                                <input
+                                    type="number"
+                                    className="bg-secondary border border-border rounded w-12 text-center text-main"
+                                    min="1"
+                                    defaultValue={widgetState.counter.step || 1}
+                                    onBlur={(e) => socket.emit('widget-action', { type: 'counter-update', payload: { step: parseInt(e.target.value) || 1 } })}
+                                />
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <label className="cursor-pointer select-none flex items-center gap-1">
+                                    <input
+                                        type="checkbox"
+                                        checked={widgetState.counter.soundEnabled || false}
+                                        onChange={(e) => socket.emit('widget-action', { type: 'counter-update', payload: { soundEnabled: e.target.checked } })}
+                                    />
+                                    Sound
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </Card>

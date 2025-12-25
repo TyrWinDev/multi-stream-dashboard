@@ -124,7 +124,7 @@ let kickSession = { chatroomId: null, username: null };
 // In a real app, use DB or file persistence
 let widgetState = {
     global: { theme: 'default', font: 'sans', transparent: false, animation: 'none' },
-    counter: { count: 0, title: 'Counter' },
+    counter: { count: 0, title: 'Counter', step: 1, soundEnabled: true },
     timer: { duration: 300, remaining: 300, isRunning: false, title: 'Timer' },
     social: { handles: [{ platform: 'twitter', handle: '@User' }], currentIndex: 0, title: 'Socials' },
     progress: { current: 0, max: 100, title: 'Goal' },
