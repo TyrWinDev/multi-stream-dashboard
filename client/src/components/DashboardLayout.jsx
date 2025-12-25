@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Zap, Reply, UserPlus, Heart, Gift, Camera, ExternalLink, Settings2, Bell } from 'lucide-react';
+import { MessageSquare, Zap, Reply, UserPlus, Heart, Gift, Camera, ExternalLink, Settings2, Bell, LayoutGrid } from 'lucide-react';
 import ChatInput from './ChatInput';
 import StreamManager from './StreamManager';
 import StatusBar from './StatusBar';
@@ -213,6 +213,14 @@ const DashboardLayout = ({
                                 title="Toggle Social Metrics Dock"
                             >
                                 <Heart className="w-4 h-4" />
+                            </button>
+                            {/* Widgets Dashboard */}
+                            <button
+                                onClick={() => window.open('/dashboard/widgets', 'WidgetControl', 'width=1000,height=800')}
+                                className="p-2 rounded-full hover:bg-white/10 text-muted hover:text-accent transition-colors"
+                                title="Open Widget Control Deck"
+                            >
+                                <LayoutGrid className="w-4 h-4" />
                             </button>
                         </div>
                     </div>

@@ -14,6 +14,8 @@ A robust multi-platform dashboard for live streamers. Monitor chat, activity fee
     -   **Game Search**: Integrated Twitch Category search that auto-maps to other platforms.
 -   **OBS Widgets**:
     -   **chat** and **activity** browser sources with full customization.
+    -   **Interactive Widgets**: Counter, Timer, Social Rotator, Goals, Wheel, etc.
+    -   **Control Deck**: Dedicated interface to manage live widgets.
     -   **Source Customizer**: Visual editor for fonts, colors, animations, and transparency.
     -   **Import Config**: Restore your previous widget settings by pasting the generated URL.
 -   **Activity Feed**: Real-time updates for follows, subscriptions, tips, and gifts.
@@ -123,6 +125,7 @@ You need to run both the server and the client.
     -   Use the **Customizer Modal** to style your overlay (Fonts, Colors, Transparency).
     -   **Copy URL**: Paste this into a Browser Source in OBS.
     -   **Import URL**: Paste an existing Browser Source URL to edit its settings.
+    -   **Widgets**: Visit the **Widget Control Deck** to control specialized widgets (Counter, Timer, etc). Add them to OBS using `http://localhost:5173/widgets/[type]`.
 
 5.  **Streaming:**
     -   **Chat**: Type in the input box to send messages to all connected write-supported platforms.

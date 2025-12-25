@@ -67,7 +67,17 @@ const emitActivity = (type, platform, user, details) => {
         details,
         timestamp: new Date().toISOString()
     };
-    if (io) io.emit('activity-event', activity);
+
+    // Update Widget State History
+    if (widgetState && widgetState.recentEvents) {
+        widgetState.recentEvents.unshift(activity);
+        if (widgetState.recentEvents.length > 10) widgetState.recentEvents.pop();
+    }
+
+    if (io) {
+        io.emit('activity-event', activity);
+        io.emit('widget-event', { type: 'activity', payload: activity }); // Sync standalone widgets if they use state
+    }
 };
 
 // --- Platform Connectors ---
@@ -109,6 +119,39 @@ app.get('/api/diag', (req, res) => {
 
 // In-memory session store (simple)
 let kickSession = { chatroomId: null, username: null };
+
+// --- Widget State Store ---
+// In a real app, use DB or file persistence
+let widgetState = {
+    counter: { count: 0, title: 'Counter' },
+    timer: { duration: 300, remaining: 300, isRunning: false, title: 'Timer' },
+    social: { handles: [{ platform: 'twitter', handle: '@User' }], currentIndex: 0, title: 'Socials' },
+    progress: { current: 0, max: 100, title: 'Goal' },
+    goals: { items: [{ id: 1, text: 'Goal 1', completed: false }], title: 'Goals' },
+    wheel: { segments: ['Option 1', 'Option 2', 'Option 3'], spinning: false, winner: null, title: 'Wheel' },
+    highlight: { message: null },
+    recentEvents: [] // Mirrors client activity but stored for widget init
+};
+
+// Global Timer Interval
+setInterval(() => {
+    if (widgetState.timer.isRunning && widgetState.timer.remaining > 0) {
+        widgetState.timer.remaining--;
+
+        // Broadcast update every second
+        if (io) {
+            io.emit('widget-event', { type: 'timer-update', payload: { remaining: widgetState.timer.remaining } });
+        }
+
+        // Auto-stop at 0
+        if (widgetState.timer.remaining === 0) {
+            widgetState.timer.isRunning = false;
+            if (io) {
+                io.emit('widget-event', { type: 'timer-update', payload: { isRunning: false } });
+            }
+        }
+    }
+}, 1000);
 
 app.get('/api/auth/status', async (req, res) => {
     // Debug Log
@@ -655,6 +698,7 @@ if (process.env.STREAMELEMENTS_JWT) {
         // Connection handling
         io.on('connection', (socket) => {
             socket.emit('history', chatHistory);
+            socket.emit('widget-state', widgetState);
 
             // SIMULATION HANDLER
             socket.on('simulate-event', ({ type, data }) => {
@@ -664,6 +708,25 @@ if (process.env.STREAMELEMENTS_JWT) {
                     emitActivity(data.type, data.platform, data.user, data.details);
                 }
             });
+
+            // WIDGET HANDLER
+            socket.on('widget-action', ({ type, payload }) => {
+                // Update State
+                if (type === 'counter-update') widgetState.counter = { ...widgetState.counter, ...payload };
+                if (type === 'timer-update') widgetState.timer = { ...widgetState.timer, ...payload };
+                if (type === 'social-update') widgetState.social = { ...widgetState.social, ...payload };
+                if (type === 'progress-update') widgetState.progress = { ...widgetState.progress, ...payload };
+                if (type === 'goals-update') widgetState.goals = { ...widgetState.goals, ...payload };
+                if (type === 'wheel-update') {
+                    widgetState.wheel = { ...widgetState.wheel, ...payload };
+                    if (payload.winner) widgetState.wheel.winner = payload.winner;
+                }
+                if (type === 'highlight-message') widgetState.highlight = { message: payload };
+
+                // Broadcast
+                io.emit('widget-event', { type, payload });
+            });
+
 
             // Handle sending messages (Duplicated internal logic, but shared IO scope)
             socket.on('send-message', async ({ platform, text }) => {

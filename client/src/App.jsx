@@ -6,6 +6,8 @@ import DashboardLayout from './components/DashboardLayout';
 import ChatDock from './components/ChatDock';
 import ActivityDock from './components/ActivityDock';
 import AlertsDock from './components/AlertsDock';
+import WidgetDashboard from './pages/WidgetDashboard';
+import WidgetStandalone from './pages/WidgetStandalone';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
@@ -39,6 +41,7 @@ function App() {
     const [currentAlert, setCurrentAlert] = useState(null); // Active Alert
     const [alertQueue, setAlertQueue] = useState([]); // Queue of pending alerts
     const [areAlertsEnabled, setAreAlertsEnabled] = useState(localStorage.getItem('alerts_enabled') !== 'false');
+    const [widgetState, setWidgetState] = useState(null);
 
     const chatEndRef = useRef(null);
     const activityEndRef = useRef(null);
@@ -208,6 +211,36 @@ function App() {
             setMessages(history);
         });
 
+        socket.on('widget-state', (state) => {
+            setWidgetState(state);
+        });
+
+        socket.on('widget-event', ({ type, payload }) => {
+            setWidgetState((prev) => {
+                if (!prev) return prev;
+                let next = { ...prev };
+                if (type === 'counter-update') next.counter = { ...next.counter, ...payload };
+                if (type === 'timer-update') next.timer = { ...next.timer, ...payload };
+                if (type === 'social-update') next.social = { ...next.social, ...payload };
+                if (type === 'progress-update') next.progress = { ...next.progress, ...payload };
+                if (type === 'goals-update') next.goals = { ...next.goals, ...payload };
+                if (type === 'wheel-update') {
+                    next.wheel = { ...next.wheel, ...payload };
+                    if (payload.winner) next.wheel.winner = payload.winner;
+                }
+                if (type === 'highlight-message') next.highlight = { message: payload };
+                if (type === 'activity') {
+                    // Ensure unique IDs if possible, or just prepend
+                    const current = next.recentEvents || [];
+                    // Check dupe
+                    if (!current.find(e => e.id === payload.id)) {
+                        next.recentEvents = [payload, ...current].slice(0, 10);
+                    }
+                }
+                return next;
+            });
+        });
+
         return () => socket.disconnect();
     }, []);
 
@@ -279,6 +312,16 @@ function App() {
                 {/* Standalone Alerts Dock / OBS Source */}
                 <Route path="/alerts" element={
                     <AlertsDock />
+                } />
+
+                {/* Widget Control Deck */}
+                <Route path="/dashboard/widgets" element={
+                    <WidgetDashboard socket={socketRef.current} widgetState={widgetState} />
+                } />
+
+                {/* Individual Widgets (Browser Sources) */}
+                <Route path="/widgets/:type" element={
+                    <WidgetStandalone socket={socketRef.current} widgetState={widgetState} />
                 } />
             </Routes>
         </div>

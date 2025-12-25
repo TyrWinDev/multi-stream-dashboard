@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2025-12-25
+
+### Added
+- **Widget Collection**: A suite of interactive browser source widgets for OBS.
+  - **Counter**: Manually controllable counter (e.g., Death Counter, Win Counter).
+  - **Timer**: Countdown timer with customizable duration and controls (Play/Pause/Reset).
+  - **Social Rotator**: Auto-rotating display of social media handles.
+  - **Progress Bar**: Visual progress tracker for goals (e.g., Donation Goal).
+  - **Goal Checklist**: Interactive list of stream objectives.
+  - **Spin Wheel**: Customizable wheel for giveaways or challenges.
+  - **Chat Highlight**: "Star" messages to display them prominently on stream.
+  - **Recent Activity**: Standalone feed of recent events.
+- **Widget Dashboard**: A centralized control deck (`/dashboard/widgets`) to manage all widgets in real-time.
+- **Browser Source Routes**: Dedicated clean routes (`/widgets/:type`) for easy OBS integration.
+
 ## [1.2.0] - 2025-12-15
 
 ### Added
