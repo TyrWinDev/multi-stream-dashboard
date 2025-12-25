@@ -54,10 +54,21 @@ const handleTwitchCallback = async (req, res) => {
             }
         });
 
+        // Fetch User Info to get ID for 7TV
+        const userResp = await axios.get('https://api.twitch.tv/helix/users', {
+            headers: {
+                'Client-Id': process.env.TWITCH_CLIENT_ID,
+                'Authorization': `Bearer ${resp.data.access_token}`
+            }
+        });
+        const userData = userResp.data.data[0];
+
         tokens.twitch = {
             accessToken: resp.data.access_token,
             refreshToken: resp.data.refresh_token,
-            expiry: Date.now() + (resp.data.expires_in * 1000)
+            expiry: Date.now() + (resp.data.expires_in * 1000),
+            id: userData.id,
+            username: userData.login
         };
         saveTokens();
 

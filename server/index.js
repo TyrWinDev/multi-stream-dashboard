@@ -150,12 +150,27 @@ setInterval(() => {
 
 app.get('/api/auth/status', async (req, res) => {
     // Debug Log
-    const tLog = getTokens('twitch');
-    const kLog = getTokens('kick');
+    const t = getTokens('twitch');
+    const k = getTokens('kick');
+    const y = getTokens('youtube');
 
     const status = {
-        twitch: { connected: false },
-        kick: { connected: false }
+        twitch: {
+            connected: !!t,
+            username: t?.username || null,
+            id: t?.id || null
+        },
+        kick: {
+            connected: !!k,
+            username: k?.username || null,
+            id: k?.id || null
+        },
+        youtube: {
+            connected: !!y,
+            username: y?.username || null,
+            id: y?.id || null
+        },
+        tiktok: { connected: false } // Initialize TikTok status
     };
 
     // Twitch Check

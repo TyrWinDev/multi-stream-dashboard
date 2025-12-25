@@ -57,13 +57,19 @@ function App() {
         localStorage.setItem('alerts_enabled', areAlertsEnabled);
     }, [areAlertsEnabled]);
 
-    // Initial Auth Check
+    // Initial Auth Check & Emote Init
     useEffect(() => {
         // ... existing auth ...
         fetch(`${SOCKET_URL}/api/auth/status`)
             .then(res => res.json())
-            .then(data => { setAuthStatus({ ...data, loading: false }); })
+            .then(data => {
+                setAuthStatus({ ...data, loading: false });
+            })
             .catch(err => setAuthStatus({ twitch: false, kick: false, loading: false }));
+
+        // HARDCODED FALLBACK FOR TESTING until we have dynamic ID:
+        // Use a known channel or user's provided channel if we had it.
+        // I'll leave this commented out until we confirm ID source.
     }, []);
 
     // ... Connect Handlers ...
@@ -138,41 +144,66 @@ function App() {
     };
 
     const renderMessageText = (msg) => {
-        if (!msg.emotes) return msg.text;
+        // If native emotes exist, we could try to mix them, but simple approach:
+        // 1. If text has native emotes, they are usually handled by Twitch/Kick parsers before hitting here?
+        // Actually, msg.emotes comes from the backend. 
+        // We initially just parsed native emotes. 
+        // Now we want to run EmoteParser.parse() on the remaining text.
 
-        const replacements = [];
-        Object.entries(msg.emotes).forEach(([id, positions]) => {
-            positions.forEach(pos => {
-                const [start, end] = pos.split('-').map(Number);
-                replacements.push({ start, end: end + 1, id });
+        // This gets complex: Native emotes rely on indices. 7TV relies on string matching.
+        // Easiest path:
+        // 1. Build a "parts" array from Native Emotes.
+        // 2. Iterate "string" parts of that array and run EmoteParser over them.
+
+        let nodes = [];
+
+        // --- Step 1: Handle Native Emotes ---
+        if (msg.emotes) {
+            const replacements = [];
+            Object.entries(msg.emotes).forEach(([id, positions]) => {
+                positions.forEach(pos => {
+                    const [start, end] = pos.split('-').map(Number);
+                    replacements.push({ start, end: end + 1, id });
+                });
             });
-        });
+            replacements.sort((a, b) => a.start - b.start);
 
-        replacements.sort((a, b) => a.start - b.start);
-
-        const nodes = [];
-        let lastIdx = 0;
-
-        replacements.forEach(({ start, end, id }, idx) => {
-            if (start > lastIdx) {
-                nodes.push(msg.text.substring(lastIdx, start));
+            let lastIdx = 0;
+            replacements.forEach(({ start, end, id }, idx) => {
+                // Text before emote
+                if (start > lastIdx) {
+                    nodes.push(msg.text.substring(lastIdx, start));
+                }
+                // Native Emote
+                nodes.push({ type: 'native-emote', id, key: `native-${id}-${idx}` });
+                lastIdx = end;
+            });
+            // Text after last emote
+            if (lastIdx < msg.text.length) {
+                nodes.push(msg.text.substring(lastIdx));
             }
-            nodes.push(
-                <img
-                    key={`${id}-${idx}`}
-                    src={`https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0`}
-                    alt=""
-                    className="inline-block mx-1 w-[20px] h-[20px] align-middle"
-                />
-            );
-            lastIdx = end;
-        });
-
-        if (lastIdx < msg.text.length) {
-            nodes.push(msg.text.substring(lastIdx));
+        } else {
+            nodes = [msg.text];
         }
 
-        return nodes;
+        // --- Step 2: Render Nodes ---
+        const finalNodes = [];
+        nodes.forEach(node => {
+            if (typeof node === 'string') {
+                finalNodes.push(node);
+            } else if (node.type === 'native-emote') {
+                finalNodes.push(
+                    <img
+                        key={node.key}
+                        src={`https://static-cdn.jtvnw.net/emoticons/v2/${node.id}/default/dark/1.0`}
+                        alt=""
+                        className="inline-block mx-1 w-[20px] h-[20px] align-middle"
+                    />
+                );
+            }
+        });
+
+        return finalNodes;
     };
 
 
