@@ -40,7 +40,7 @@ const WidgetStandalone = ({ socket, widgetState }) => {
             case 'highlight':
                 return <ChatHighlightWidget socket={socket} state={widgetState.highlight} />;
             case 'activity':
-                return <RecentActivityWidget socket={socket} state={widgetState.recentEvents} />;
+                return <RecentActivityWidget socket={socket} state={widgetState} />;
             default:
                 return <div className="text-red-500 font-bold">Unknown Widget Type: {type}</div>;
         }
