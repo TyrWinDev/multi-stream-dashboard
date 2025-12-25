@@ -121,33 +121,8 @@ app.get('/api/diag', (req, res) => {
 let kickSession = { chatroomId: null, username: null };
 
 // --- Widget State Store ---
-// In a real app, use DB or file persistence
-let widgetState = {
-    global: { theme: 'default', font: 'sans', transparent: false, animation: 'none' },
-    counter: { count: 0, title: 'Counter', step: 1, soundEnabled: true },
-    timer: { duration: 300, remaining: 300, isRunning: false, title: 'Timer', mode: 'countdown', alarmEnabled: true },
-    social: { handles: [{ platform: 'twitter', handle: '@User' }], currentIndex: 0, title: 'Socials' },
-    progress: { current: 0, max: 100, title: 'Goal', gradientStart: '#06b6d4', gradientEnd: '#3b82f6', showPercentage: true, showFraction: true },
-    goals: { items: [{ id: 1, text: 'Goal 1', completed: false }], title: 'Goals', showCompleted: true },
-    wheel: {
-        segments: [
-            { id: 1, text: 'Option 1', color: '#ef4444' },
-            { id: 2, text: 'Option 2', color: '#3b82f6' },
-            { id: 3, text: 'Option 3', color: '#10b981' }
-        ],
-        spinning: false,
-        winner: null,
-        title: 'Spin Wheel'
-    },
-    highlight: { message: null, style: 'modern', autoHide: 0 },
-    activity: {
-        limit: 5,
-        filter: ['follow', 'sub', 'cheer', 'raid', 'donation'],
-        layout: 'list',
-        title: 'Recent Activity'
-    },
-    recentEvents: [] // Mirrors client activity but stored for widget init
-};
+const storage = require('./storage');
+let widgetState = storage.loadState();
 
 // Global Timer Interval
 setInterval(() => {
@@ -742,7 +717,12 @@ if (process.env.STREAMELEMENTS_JWT) {
                     widgetState.wheel = { ...widgetState.wheel, ...payload };
                     if (payload.winner) widgetState.wheel.winner = payload.winner;
                 }
+                if (type === 'highlight-update') widgetState.highlight = { ...widgetState.highlight, ...payload };
+                if (type === 'activity-update') widgetState.activity = { ...widgetState.activity, ...payload };
                 if (type === 'highlight-message') widgetState.highlight = { message: payload };
+
+                // Persist State
+                storage.saveState(widgetState);
 
                 // Broadcast
                 io.emit('widget-event', { type, payload });
