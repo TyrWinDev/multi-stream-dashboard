@@ -46,12 +46,39 @@ const WidgetStandalone = ({ socket, widgetState }) => {
         }
     };
 
+    // Derived Styles
+    const globalState = widgetState.global || {};
+    const fontClass = globalState.font === 'serif' ? 'font-serif' : globalState.font === 'mono' ? 'font-mono' : 'font-sans';
+
+    // Theme Injection (Basic)
+    // For 'neon', we might add a class.
+
+    // Animation
+    const animMap = {
+        'fade-in': 'animate-fade-in',
+        'slide-in': 'animate-slide-in',
+        'slide-up': 'animate-slide-up',
+        'bounce-in': 'animate-bounce-in',
+        'none': ''
+    };
+    const animClass = animMap[globalState.animation] || '';
+
+    // Transparency: If global transparent is TRUE, overrides 'bg' unless 'bg' is explicit? 
+    // Usually OBS adds it as a layer, so 'transparent' means no background color on the container.
+    // If 'transparent mode' is ON, we force transparency.
+    // However, the `bg` param is for testing usually.
+    // Let's say: bgColor from URL > Global Transparent > Default Transparent
+
+    const finalBg = bgColor === 'dark' ? '#0f0f0f' : (globalState.transparent ? 'transparent' : (bgColor || 'transparent'));
+
     return (
         <div
-            className={`w-screen h-screen overflow-hidden flex items-center justify-center p-4`}
-            style={{ backgroundColor: bgColor === 'dark' ? '#0f0f0f' : (bgColor || 'transparent') }}
+            className={`w-screen h-screen overflow-hidden flex items-center justify-center p-4 ${fontClass} ${globalState.theme === 'neon' ? 'theme-cyberpunk' : ''}`}
+            style={{ backgroundColor: finalBg }}
         >
-            {renderWidget()}
+            <div className={`w-full flex justify-center ${animClass} duration-500`}>
+                {renderWidget()}
+            </div>
         </div>
     );
 };

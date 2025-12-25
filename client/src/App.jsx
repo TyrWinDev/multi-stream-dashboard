@@ -219,6 +219,7 @@ function App() {
             setWidgetState((prev) => {
                 if (!prev) return prev;
                 let next = { ...prev };
+                if (type === 'global-update') next.global = { ...next.global, ...payload };
                 if (type === 'counter-update') next.counter = { ...next.counter, ...payload };
                 if (type === 'timer-update') next.timer = { ...next.timer, ...payload };
                 if (type === 'social-update') next.social = { ...next.social, ...payload };

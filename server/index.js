@@ -123,6 +123,7 @@ let kickSession = { chatroomId: null, username: null };
 // --- Widget State Store ---
 // In a real app, use DB or file persistence
 let widgetState = {
+    global: { theme: 'default', font: 'sans', transparent: false, animation: 'none' },
     counter: { count: 0, title: 'Counter' },
     timer: { duration: 300, remaining: 300, isRunning: false, title: 'Timer' },
     social: { handles: [{ platform: 'twitter', handle: '@User' }], currentIndex: 0, title: 'Socials' },
@@ -712,6 +713,7 @@ if (process.env.STREAMELEMENTS_JWT) {
             // WIDGET HANDLER
             socket.on('widget-action', ({ type, payload }) => {
                 // Update State
+                if (type === 'global-update') widgetState.global = { ...widgetState.global, ...payload };
                 if (type === 'counter-update') widgetState.counter = { ...widgetState.counter, ...payload };
                 if (type === 'timer-update') widgetState.timer = { ...widgetState.timer, ...payload };
                 if (type === 'social-update') widgetState.social = { ...widgetState.social, ...payload };

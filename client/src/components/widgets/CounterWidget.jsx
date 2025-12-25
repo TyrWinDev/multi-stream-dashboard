@@ -12,8 +12,8 @@ const CounterWidget = ({ socket, state }) => {
 
     return (
         <div className="flex flex-col items-center justify-center h-full w-full bg-transparent">
-            <h2 className="text-2xl font-bold text-white drop-shadow-md mb-2">{state.title}</h2>
-            <div className="text-6xl font-black text-cyan-400 drop-shadow-lg tracking-wider animate-pulse-slow">
+            <h2 className="text-2xl font-bold text-main drop-shadow-md mb-2">{state.title}</h2>
+            <div className="text-6xl font-black text-accent drop-shadow-lg tracking-wider animate-pulse-slow">
                 {state.count}
             </div>
         </div>

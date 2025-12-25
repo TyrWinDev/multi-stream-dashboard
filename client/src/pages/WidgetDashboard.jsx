@@ -65,6 +65,64 @@ const WidgetDashboard = ({ socket, widgetState }) => {
         <div className="p-6 h-full overflow-y-auto pb-20 bg-primary">
             <h1 className="text-3xl font-black text-main mb-6 drop-shadow-sm border-b border-border pb-4">Widget Control Deck</h1>
 
+            {/* Global Settings Panel */}
+            <div className="mb-8 p-4 bg-tertiary/50 rounded-xl border border-border">
+                <h3 className="text-main font-bold mb-3 uppercase text-sm tracking-wider flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-accent"></span> Global Settings
+                </h3>
+                <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center gap-2">
+                        <label className="text-muted text-sm">Font:</label>
+                        <select
+                            className="bg-secondary border border-border text-main rounded p-1 text-sm focus:outline-none focus:border-accent"
+                            value={widgetState.global?.font || 'sans'}
+                            onChange={(e) => socket.emit('widget-action', { type: 'global-update', payload: { font: e.target.value } })}
+                        >
+                            <option value="sans">Sans-Serif (Default)</option>
+                            <option value="serif">Serif (Elegant)</option>
+                            <option value="mono">Monospace (Code)</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-muted text-sm">Theme Override:</label>
+                        <select
+                            className="bg-secondary border border-border text-main rounded p-1 text-sm focus:outline-none focus:border-accent"
+                            value={widgetState.global?.theme || 'default'}
+                            onChange={(e) => socket.emit('widget-action', { type: 'global-update', payload: { theme: e.target.value } })}
+                        >
+                            <option value="default">Default</option>
+                            <option value="neon">Neon</option>
+                            <option value="minimal">Minimal</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-muted text-sm cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                className="mr-2"
+                                checked={widgetState.global?.transparent || false}
+                                onChange={(e) => socket.emit('widget-action', { type: 'global-update', payload: { transparent: e.target.checked } })}
+                            />
+                            Transparent Mode (OBS)
+                        </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-muted text-sm">Animation:</label>
+                        <select
+                            className="bg-secondary border border-border text-main rounded p-1 text-sm focus:outline-none focus:border-accent"
+                            value={widgetState.global?.animation || 'none'}
+                            onChange={(e) => socket.emit('widget-action', { type: 'global-update', payload: { animation: e.target.value } })}
+                        >
+                            <option value="none">None</option>
+                            <option value="fade-in">Fade In</option>
+                            <option value="slide-in">Slide In (Left)</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="bounce-in">Bounce In</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 {/* COUNTER */}
