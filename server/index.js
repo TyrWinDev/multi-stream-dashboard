@@ -127,10 +127,25 @@ let widgetState = {
     counter: { count: 0, title: 'Counter', step: 1, soundEnabled: true },
     timer: { duration: 300, remaining: 300, isRunning: false, title: 'Timer', mode: 'countdown', alarmEnabled: true },
     social: { handles: [{ platform: 'twitter', handle: '@User' }], currentIndex: 0, title: 'Socials' },
-    progress: { current: 0, max: 100, title: 'Goal' },
-    goals: { items: [{ id: 1, text: 'Goal 1', completed: false }], title: 'Goals' },
-    wheel: { segments: ['Option 1', 'Option 2', 'Option 3'], spinning: false, winner: null, title: 'Wheel' },
-    highlight: { message: null },
+    progress: { current: 0, max: 100, title: 'Goal', gradientStart: '#06b6d4', gradientEnd: '#3b82f6', showPercentage: true, showFraction: true },
+    goals: { items: [{ id: 1, text: 'Goal 1', completed: false }], title: 'Goals', showCompleted: true },
+    wheel: {
+        segments: [
+            { id: 1, text: 'Option 1', color: '#ef4444' },
+            { id: 2, text: 'Option 2', color: '#3b82f6' },
+            { id: 3, text: 'Option 3', color: '#10b981' }
+        ],
+        spinning: false,
+        winner: null,
+        title: 'Spin Wheel'
+    },
+    highlight: { message: null, style: 'modern', autoHide: 0 },
+    activity: {
+        limit: 5,
+        filter: ['follow', 'sub', 'cheer', 'raid', 'donation'],
+        layout: 'list',
+        title: 'Recent Activity'
+    },
     recentEvents: [] // Mirrors client activity but stored for widget init
 };
 

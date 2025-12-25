@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Plus, Minus, Play, Pause, RotateCcw } from 'lucide-react';
+import { Plus, Minus, Play, Pause, RotateCcw, Square, CheckSquare } from 'lucide-react';
 
 const WidgetDashboard = ({ socket, widgetState }) => {
     // Local state for forms before saving/emitting
     const [, setCounterTitle] = useState('');
     const [newSocialPlatform, setNewSocialPlatform] = useState('twitter');
     const [newSocialHandle, setNewSocialHandle] = useState('');
+    const [newGoalText, setNewGoalText] = useState('');
+    const [newSegmentText, setNewSegmentText] = useState('');
+    const [newSegmentColor, setNewSegmentColor] = useState('#ef4444');
 
     // --- Handlers ---
     const updateCounter = (delta) => {
@@ -239,31 +242,215 @@ const WidgetDashboard = ({ socket, widgetState }) => {
                     </div>
                 </Card>
 
+                {/* GOALS */}
+                <Card title="Goal List">
+                    <input
+                        type="text"
+                        placeholder="Goals Title"
+                        className="bg-secondary border border-border text-main rounded text-center mb-4 w-full p-1 focus:outline-none focus:border-accent font-bold"
+                        defaultValue={widgetState.goals.title}
+                        onBlur={(e) => socket.emit('widget-action', { type: 'goals-update', payload: { title: e.target.value } })}
+                    />
+
+                    <div className="space-y-2 mb-4 max-h-[150px] overflow-y-auto pr-1">
+                        {widgetState.goals.items.length === 0 && <div className="text-center text-xs text-muted italic">No goals set.</div>}
+                        {widgetState.goals.items.map(item => (
+                            <div key={item.id} className="flex items-center gap-2 bg-secondary p-2 rounded text-sm text-main border border-border">
+                                <button
+                                    onClick={() => {
+                                        const newItems = widgetState.goals.items.map(i => i.id === item.id ? { ...i, completed: !i.completed } : i);
+                                        socket.emit('widget-action', { type: 'goals-update', payload: { items: newItems } });
+                                    }}
+                                    className={`p-1 rounded hover:bg-tertiary transition-colors ${item.completed ? 'text-accent' : 'text-muted'}`}
+                                >
+                                    {item.completed ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                                </button>
+                                <span className={`flex-1 truncate ${item.completed ? 'text-muted line-through' : ''}`}>{item.text}</span>
+                                <button
+                                    onClick={() => {
+                                        const newItems = widgetState.goals.items.filter(i => i.id !== item.id);
+                                        socket.emit('widget-action', { type: 'goals-update', payload: { items: newItems } });
+                                    }}
+                                    className="text-red-500 hover:text-red-400 p-1"
+                                >
+                                    <Minus className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            className="bg-secondary border border-border text-main rounded text-xs p-2 flex-1 outline-none focus:border-accent"
+                            placeholder="New Goal..."
+                            value={newGoalText}
+                            onChange={(e) => setNewGoalText(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newGoalText.trim()) {
+                                    const newItem = { id: Date.now(), text: newGoalText, completed: false };
+                                    socket.emit('widget-action', { type: 'goals-update', payload: { items: [...widgetState.goals.items, newItem] } });
+                                    setNewGoalText('');
+                                }
+                            }}
+                        />
+                        <button
+                            className="bg-accent hover:bg-accent-hover text-white rounded p-2"
+                            onClick={() => {
+                                if (newGoalText.trim()) {
+                                    const newItem = { id: Date.now(), text: newGoalText, completed: false };
+                                    socket.emit('widget-action', { type: 'goals-update', payload: { items: [...widgetState.goals.items, newItem] } });
+                                    setNewGoalText('');
+                                }
+                            }}
+                        >
+                            <Plus className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <div className="mt-2">
+                        <label className="flex items-center gap-2 cursor-pointer text-xs text-muted justify-center">
+                            <input
+                                type="checkbox"
+                                checked={widgetState.goals.showCompleted !== false}
+                                onChange={(e) => socket.emit('widget-action', { type: 'goals-update', payload: { showCompleted: e.target.checked } })}
+                            />
+                            Show Completed Items
+                        </label>
+                    </div>
+                </Card>
+
                 {/* PROGRESS */}
                 <Card title="Progress Goal">
-                    <div className="mb-2 flex justify-between text-main text-sm">
+                    <input
+                        type="text"
+                        placeholder="Goal Title"
+                        className="bg-secondary border border-border text-main rounded text-center mb-4 w-full p-1 focus:outline-none focus:border-accent font-bold"
+                        defaultValue={widgetState.progress.title}
+                        onBlur={(e) => socket.emit('widget-action', { type: 'progress-update', payload: { title: e.target.value } })}
+                    />
+
+                    <div className="mb-2 flex justify-between text-main text-sm px-1">
                         <span>Current: <span className="text-accent font-bold">{widgetState.progress.current}</span></span>
                         <span>Max: {widgetState.progress.max}</span>
                     </div>
+
                     <div className="w-full h-4 bg-secondary rounded-full overflow-hidden mb-4 border border-border">
-                        <div className="h-full bg-accent transition-all duration-500" style={{ width: `${(widgetState.progress.current / widgetState.progress.max) * 100}%` }}></div>
+                        <div
+                            className="h-full transition-all duration-500"
+                            style={{
+                                width: `${(widgetState.progress.current / widgetState.progress.max) * 100}%`,
+                                background: `linear-gradient(to right, ${widgetState.progress.gradientStart || '#06b6d4'}, ${widgetState.progress.gradientEnd || '#3b82f6'})`
+                            }}
+                        ></div>
                     </div>
-                    <div className="flex gap-2">
+
+                    <div className="flex gap-2 mb-4">
                         <button onClick={() => updateProgress(-1)} className="bg-secondary hover:bg-border text-main py-2 px-4 rounded w-full transition-colors font-bold">-1</button>
                         <button onClick={() => updateProgress(1)} className="bg-accent hover:bg-accent-hover text-white py-2 px-4 rounded w-full transition-colors font-bold">+1</button>
                         <button onClick={() => updateProgress(5)} className="bg-accent hover:bg-accent-hover text-white py-2 px-4 rounded w-full transition-colors font-bold">+5</button>
+                    </div>
+
+                    {/* Customization Grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted">
+                        <div className="flex flex-col gap-1">
+                            <label>Start Color</label>
+                            <input type="color" className="w-full h-6 rounded cursor-pointer"
+                                value={widgetState.progress.gradientStart || '#06b6d4'}
+                                onChange={(e) => socket.emit('widget-action', { type: 'progress-update', payload: { gradientStart: e.target.value } })}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label>End Color</label>
+                            <input type="color" className="w-full h-6 rounded cursor-pointer"
+                                value={widgetState.progress.gradientEnd || '#3b82f6'}
+                                onChange={(e) => socket.emit('widget-action', { type: 'progress-update', payload: { gradientEnd: e.target.value } })}
+                            />
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer mt-2 col-span-2">
+                            <input
+                                type="checkbox"
+                                checked={widgetState.progress.showPercentage !== false}
+                                onChange={(e) => socket.emit('widget-action', { type: 'progress-update', payload: { showPercentage: e.target.checked } })}
+                            />
+                            Show Percentage
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer col-span-2">
+                            <input
+                                type="checkbox"
+                                checked={widgetState.progress.showFraction !== false}
+                                onChange={(e) => socket.emit('widget-action', { type: 'progress-update', payload: { showFraction: e.target.checked } })}
+                            />
+                            Show Fraction (Current/Max)
+                        </label>
                     </div>
                 </Card>
 
                 {/* WHEEL */}
                 <Card title="Spin Wheel">
-                    <div className="text-center mb-4 text-main h-[24px]">
-                        {widgetState.wheel.spinning ? <span className="text-accent animate-pulse">Spinning...</span> : (widgetState.wheel.winner ? <span>Winner: <span className="font-bold text-accent">{widgetState.wheel.winner}</span></span> : 'Ready to Spin')}
+                    <input
+                        type="text"
+                        placeholder="Wheel Title"
+                        className="bg-secondary border border-border text-main rounded text-center mb-4 w-full p-1 focus:outline-none focus:border-accent font-bold"
+                        defaultValue={widgetState.wheel.title}
+                        onBlur={(e) => socket.emit('widget-action', { type: 'wheel-update', payload: { title: e.target.value } })}
+                    />
+
+                    <div className="space-y-2 mb-4 max-h-[150px] overflow-y-auto pr-1">
+                        {widgetState.wheel.segments.map((seg, i) => (
+                            <div key={seg.id || i} className="flex items-center gap-2 bg-secondary p-2 rounded text-sm text-main border border-border">
+                                <div className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: seg.color }}></div>
+                                <span className="flex-1 truncate">{seg.text}</span>
+                                <button
+                                    onClick={() => {
+                                        const newSegments = widgetState.wheel.segments.filter((_, idx) => idx !== i);
+                                        socket.emit('widget-action', { type: 'wheel-update', payload: { segments: newSegments } });
+                                    }}
+                                    className="text-red-500 hover:text-red-400 p-1"
+                                >
+                                    <Minus className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2 mb-4">
+                        <input type="color" className="w-8 h-8 rounded cursor-pointer border-none p-0 bg-transparent" value={newSegmentColor} onChange={(e) => setNewSegmentColor(e.target.value)} />
+                        <input
+                            type="text"
+                            className="bg-secondary border border-border text-main rounded text-xs p-2 flex-1 outline-none focus:border-accent min-w-0"
+                            placeholder="New Option..."
+                            value={newSegmentText}
+                            onChange={(e) => setNewSegmentText(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newSegmentText.trim()) {
+                                    const newSeg = { id: Date.now(), text: newSegmentText, color: newSegmentColor };
+                                    socket.emit('widget-action', { type: 'wheel-update', payload: { segments: [...widgetState.wheel.segments, newSeg] } });
+                                    setNewSegmentText('');
+                                }
+                            }}
+                        />
+                        <button
+                            className="bg-accent hover:bg-accent-hover text-white rounded p-2"
+                            onClick={() => {
+                                if (newSegmentText.trim()) {
+                                    const newSeg = { id: Date.now(), text: newSegmentText, color: newSegmentColor };
+                                    socket.emit('widget-action', { type: 'wheel-update', payload: { segments: [...widgetState.wheel.segments, newSeg] } });
+                                    setNewSegmentText('');
+                                }
+                            }}
+                        >
+                            <Plus className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <div className="text-center mb-2 text-main h-[20px] text-xs">
+                        {widgetState.wheel.spinning ? <span className="text-accent animate-pulse font-bold">SPINNING...</span> : (widgetState.wheel.winner ? <span>Winner: <span className="font-bold text-accent">{widgetState.wheel.winner}</span></span> : 'Ready')}
                     </div>
                     <button
                         onClick={spinWheel}
-                        disabled={widgetState.wheel.spinning}
-                        className={`w-full py-4 rounded-xl font-bold text-xl uppercase transition-all shadow-md ${widgetState.wheel.spinning ? 'bg-secondary text-muted cursor-not-allowed' : 'bg-gradient-to-r from-accent to-purple-600 text-white hover:scale-[1.02]'}`}
+                        disabled={widgetState.wheel.spinning || widgetState.wheel.segments.length < 2}
+                        className={`w-full py-3 rounded-xl font-bold text-lg uppercase transition-all shadow-md ${widgetState.wheel.spinning || widgetState.wheel.segments.length < 2 ? 'bg-secondary text-muted cursor-not-allowed' : 'bg-gradient-to-r from-accent to-purple-600 text-white hover:scale-[1.02]'}`}
                     >
                         SPIN!
                     </button>
@@ -338,16 +525,102 @@ const WidgetDashboard = ({ socket, widgetState }) => {
 
                 {/* HIGHLIGHT */}
                 <Card title="Chat Highlight">
-                    <div className="p-4 bg-secondary rounded border border-border text-center text-muted italic min-h-[100px] flex items-center justify-center">
+                    <div className="p-4 bg-secondary rounded border border-border text-center text-muted italic min-h-[100px] flex items-center justify-center mb-4 relative overflow-hidden">
                         {widgetState.highlight.message
-                            ? <div>
+                            ? <div className="z-10 relative">
                                 <div className="text-accent font-bold not-italic mb-1">{widgetState.highlight.message.user}</div>
                                 "{widgetState.highlight.message.text}"
                             </div>
                             : "No message highlighted."}
+                        {widgetState.highlight.message && <button onClick={() => socket.emit('widget-action', { type: 'highlight-update', payload: { message: null } })} className="absolute top-2 right-2 text-red-500 hover:text-red-400"><Minus className="w-4 h-4" /></button>}
                     </div>
-                    <div className="mt-2 text-center text-xs text-muted">
+
+                    <div className="flex flex-col gap-2 text-xs text-muted mb-2">
+                        <div className="flex justify-between items-center">
+                            <label>Style:</label>
+                            <select
+                                className="bg-secondary border border-border rounded p-1 text-main w-32"
+                                value={widgetState.highlight.style || 'modern'}
+                                onChange={(e) => socket.emit('widget-action', { type: 'highlight-update', payload: { style: e.target.value } })}
+                            >
+                                <option value="modern">Modern (Default)</option>
+                                <option value="minimal">Minimal</option>
+                                <option value="glass">Glassmorphism</option>
+                                <option value="neon">Neon Box</option>
+                            </select>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <label>Auto-Hide (sec):</label>
+                            <input
+                                type="number"
+                                className="bg-secondary border border-border rounded p-1 text-main w-16 text-center"
+                                min="0"
+                                value={widgetState.highlight.autoHide || 0}
+                                onChange={(e) => socket.emit('widget-action', { type: 'highlight-update', payload: { autoHide: parseInt(e.target.value) || 0 } })}
+                            />
+                        </div>
+                        <div className="text-[10px] text-right italic opacity-70">(0 to disable)</div>
+                    </div>
+
+                    <div className="mt-2 text-center text-xs text-muted border-t border-border pt-2">
                         (Click the "Star" icon on any chat message)
+                    </div>
+                </Card>
+
+                {/* RECENT ACTIVITY */}
+                <Card title="Recent Activity">
+                    <div className="space-y-3 p-2">
+                        <div className="flex justify-between items-center text-xs text-muted">
+                            <label>Max Items (1-10):</label>
+                            <span className="font-bold text-accent">{widgetState.activity?.limit || 5}</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="1"
+                            max="10"
+                            className="w-full accent-accent bg-secondary rounded-lg h-2 cursor-pointer"
+                            value={widgetState.activity?.limit || 5}
+                            onChange={(e) => socket.emit('widget-action', { type: 'activity-update', payload: { limit: parseInt(e.target.value) } })}
+                        />
+
+                        <div className="flex justify-between items-center text-xs text-muted mt-2">
+                            <label>Layout:</label>
+                            <select
+                                className="bg-secondary border border-border rounded p-1 text-main w-32"
+                                value={widgetState.activity?.layout || 'list'}
+                                onChange={(e) => socket.emit('widget-action', { type: 'activity-update', payload: { layout: e.target.value } })}
+                            >
+                                <option value="list">Vertical List</option>
+                                <option value="ticker">Horizontal Ticker</option>
+                            </select>
+                        </div>
+
+                        <div className="text-xs text-muted mt-2">
+                            <label className="block mb-1 font-bold">Show Events:</label>
+                            <div className="grid grid-cols-2 gap-1">
+                                {['follow', 'sub', 'cheer', 'raid', 'donation'].map(type => (
+                                    <label key={type} className="flex items-center gap-1 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={widgetState.activity?.filter?.includes(type) !== false}
+                                            onChange={(e) => {
+                                                const currentFilters = widgetState.activity?.filter || ['follow', 'sub', 'cheer', 'raid', 'donation'];
+                                                let newFilters = [];
+                                                if (e.target.checked) {
+                                                    newFilters = [...currentFilters, type];
+                                                } else {
+                                                    newFilters = currentFilters.filter(f => f !== type);
+                                                }
+                                                // Ensure no dups
+                                                newFilters = [...new Set(newFilters)];
+                                                socket.emit('widget-action', { type: 'activity-update', payload: { filter: newFilters } });
+                                            }}
+                                        />
+                                        <span className="capitalize">{type}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </Card>
 

@@ -7,18 +7,25 @@ const ProgressBarWidget = ({ state }) => {
 
     return (
         <div className="w-full max-w-lg p-4 bg-tertiary backdrop-blur-md rounded-xl border border-border shadow-2xl">
-            <div className="flex justify-between items-end mb-2">
+            <div className={`flex justify-between items-end mb-2 ${state.title ? '' : 'hidden'}`}>
                 <span className="text-main font-bold text-xl uppercase tracking-wider">{state.title}</span>
-                <span className="text-accent font-bold text-2xl">
-                    {state.current} <span className="text-muted text-lg">/ {state.max}</span>
-                </span>
+                {state.showFraction !== false && (
+                    <span className="text-accent font-bold text-2xl">
+                        {state.current} <span className="text-muted text-lg">/ {state.max}</span>
+                    </span>
+                )}
             </div>
             <div className="w-full h-8 bg-secondary rounded-full overflow-hidden border border-border relative">
                 <div
-                    className="h-full bg-gradient-to-r from-accent to-accent-hover transition-all duration-1000 ease-out flex items-center justify-end pr-2"
-                    style={{ width: `${percentage}%` }}
+                    className="h-full transition-all duration-1000 ease-out flex items-center justify-end pr-2"
+                    style={{
+                        width: `${percentage}%`,
+                        background: `linear-gradient(to right, ${state.gradientStart || '#06b6d4'}, ${state.gradientEnd || '#3b82f6'})`
+                    }}
                 >
-                    {percentage > 10 && <span className="text-white font-bold text-xs drop-shadow-md">{percentage.toFixed(0)}%</span>}
+                    {state.showPercentage !== false && percentage > 10 && (
+                        <span className="text-white font-bold text-xs drop-shadow-md">{percentage.toFixed(0)}%</span>
+                    )}
                 </div>
             </div>
         </div>

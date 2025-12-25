@@ -229,13 +229,14 @@ function App() {
                     next.wheel = { ...next.wheel, ...payload };
                     if (payload.winner) next.wheel.winner = payload.winner;
                 }
-                if (type === 'highlight-message') next.highlight = { message: payload };
+                if (type === 'highlight-update') next.highlight = { ...next.highlight, ...payload };
+                if (type === 'activity-update') next.activity = { ...next.activity, ...payload };
                 if (type === 'activity') {
                     // Ensure unique IDs if possible, or just prepend
                     const current = next.recentEvents || [];
                     // Check dupe
                     if (!current.find(e => e.id === payload.id)) {
-                        next.recentEvents = [payload, ...current].slice(0, 10);
+                        next.recentEvents = [payload, ...current].slice(0, 50); // Keep more in memory, widget filters display
                     }
                 }
                 return next;

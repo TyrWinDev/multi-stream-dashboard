@@ -68,16 +68,24 @@ const SpinWheelWidget = ({ state }) => {
                         const end = (i + 1) * angle;
                         // Generating path for slice
                         // x = r + r*cos(a), y = r + r*sin(a)
-                        const x1 = 50 + 50 * Math.cos(Math.PI * start / 180);
-                        const y1 = 50 + 50 * Math.sin(Math.PI * start / 180);
-                        const x2 = 50 + 50 * Math.cos(Math.PI * end / 180);
-                        const y2 = 50 + 50 * Math.sin(Math.PI * end / 180);
+                        // Need to convert to radians * (PI/180)
+                        // Adjust angle to start from top (-90deg) or just rotate SVG container
+                        const startRad = (start - 90) * Math.PI / 180;
+                        const endRad = (end - 90) * Math.PI / 180;
+
+                        const x1 = 50 + 50 * Math.cos(startRad);
+                        const y1 = 50 + 50 * Math.sin(startRad);
+                        const x2 = 50 + 50 * Math.cos(endRad);
+                        const y2 = 50 + 50 * Math.sin(endRad);
+
+                        // Large arc flag
+                        const largeArc = end - start <= 180 ? 0 : 1;
 
                         return (
                             <path
                                 key={i}
-                                d={`M50,50 L${x1},${y1} A50,50 0 0,1 ${x2},${y2} z`}
-                                fill={colors[i % colors.length]}
+                                d={`M50,50 L${x1},${y1} A50,50 0 ${largeArc},1 ${x2},${y2} z`}
+                                fill={seg.color || colors[i % colors.length]}
                                 stroke="#fff"
                                 strokeWidth="0.5"
                             />
@@ -94,10 +102,10 @@ const SpinWheelWidget = ({ state }) => {
                             key={'label-' + i}
                             className="absolute top-1/2 left-1/2 text-white font-bold text-sm"
                             style={{
-                                transform: `translate(-50%, -50%) rotate(${i * angle + angle / 2}deg) translate(25px)`
+                                transform: `translate(-50%, -50%) rotate(${i * angle + angle / 2}deg) translate(0px, -60px) rotate(90deg)`
                             }}
                         >
-                            {seg}
+                            <span className="drop-shadow-md">{seg.text}</span>
                         </div>
                     );
                 })}
