@@ -56,7 +56,6 @@ const normalizeMsg = (platform, user, text, color = null, avatar = null, emotes 
     if (chatHistory.length > 100) chatHistory.shift();
     chatHistory.push(msg);
     if (io) io.emit('chat-message', msg);
-    console.log(`[${platform}] ${user}: ${text}`);
 };
 
 const emitActivity = (type, platform, user, details) => {
@@ -69,7 +68,6 @@ const emitActivity = (type, platform, user, details) => {
         timestamp: new Date().toISOString()
     };
     if (io) io.emit('activity-event', activity);
-    console.log(`[ACTIVITY] ${platform} ${type} by ${user} (${details})`);
 };
 
 // --- Platform Connectors ---
@@ -116,10 +114,6 @@ app.get('/api/auth/status', async (req, res) => {
     // Debug Log
     const tLog = getTokens('twitch');
     const kLog = getTokens('kick');
-    console.log("Status Check - Tokens:", {
-        twitch: tLog ? (tLog.accessToken ? 'YES' : 'NO') : 'MISSING',
-        kick: kLog ? (kLog.accessToken ? 'YES' : 'NO') : 'MISSING'
-    });
 
     const status = {
         twitch: { connected: false },
@@ -152,14 +146,22 @@ app.get('/api/auth/status', async (req, res) => {
     const kickToken = getTokens('kick');
     if (kickToken && kickToken.accessToken) {
         try {
-            // Use /users (plural) - Verification confirmed this works for Auth User
+            // Use /users (plural) - Verification confirmed            // Msg 1: Get User Info
             const resp = await axios.get('https://api.kick.com/public/v1/users', {
                 headers: { 'Authorization': `Bearer ${kickToken.accessToken}` }
             });
 
+            // Debug: Introspect Token (Check Scopes)
+            try {
+                const introResp = await axios.post('https://api.kick.com/public/v1/token/introspect', {}, {
+                    headers: { 'Authorization': `Bearer ${kickToken.accessToken}` }
+                });
+            } catch (introErr) {
+                console.error("Kick Introspect Error:", introErr.message);
+            }
+
             // Response format: { data: [ { user_id: 123, ... } ] }
             const userData = resp.data.data ? resp.data.data[0] : resp.data;
-            // console.log("Kick User Data:", JSON.stringify(userData, null, 2)); // Reduced log spam
 
             // Store User ID for sending messages (broadcaster_user_id)
             if (userData.user_id) {
@@ -210,11 +212,10 @@ const initTwitch = async () => {
     const channels = [process.env.TWITCH_CHANNEL];
 
     if (!tokens || !tokens.accessToken) {
-        console.log("Twitch: No OAuth token found. Skipping connection.");
         return;
     }
 
-    console.log("Twitch: Initializing...");
+
 
     // Fetch username from API to ensure we have the correct identity
     let username = process.env.TWITCH_USERNAME || 'justinfan123';
@@ -227,7 +228,6 @@ const initTwitch = async () => {
         });
         if (resp.data.data?.[0]) {
             username = resp.data.data[0].login; // Use login name (lowercase)
-            console.log(`Twitch: Authenticated as ${username}`);
             // Update token with username if needed or just use it here
         }
     } catch (e) {
@@ -260,7 +260,6 @@ const initTwitch = async () => {
 
         twitchClient.on('connected', (address, port) => {
             logToFile(`Twitch: Connected to ${address}:${port}`);
-            console.log("Twitch Connected!");
         });
 
         twitchClient.on('disconnected', (reason) => {
@@ -291,7 +290,7 @@ const initTwitch = async () => {
         console.error("Twitch Connection Error:", e.message);
 
         // RETRY WITH REFRESH
-        console.log("Twitch: Attempting to refresh token and reconnect...");
+
         try {
             await refreshTwitchToken();
             initTwitch(); // Recursively call init (dangerous if loop, but refresh throws if fails)
@@ -305,6 +304,7 @@ const initTwitch = async () => {
 let kickClient;
 const initKick = async () => {
     if (process.env.KICK_CHANNEL_ID) {
+
         try {
             kickClient = createClient(process.env.KICK_CHANNEL_ID, { logger: false, readOnly: true });
 
@@ -325,7 +325,6 @@ const initKick = async () => {
                 const color = message.sender.identity?.color || '#53fc18';
                 normalizeMsg('kick', user, text, color);
             });
-            console.log(`Listening to Kick channel: ${process.env.KICK_CHANNEL_ID}`);
         } catch (e) {
             console.error("Kick Setup Error:", e.message);
         }
@@ -342,13 +341,11 @@ const initTikTok = async () => {
     if (tiktokConnection) {
         try {
             tiktokConnection.disconnect();
-            console.log("TikTok: Disconnected previous session.");
         } catch (e) { /* ignore */ }
     }
 
     if (!username) return;
 
-    console.log(`TikTok: Connecting to @${username}...`);
     try {
         tiktokConnection = new TikTokLiveConnection(username, {
             processInitialData: false,      // Skip fetching old messages to avoid spam/load
@@ -380,11 +377,9 @@ const initTikTok = async () => {
         });
 
         tiktokConnection.on('connected', state => {
-            console.info(`TikTok: Connected to roomId ${state.roomId}`);
         });
 
         tiktokConnection.on('disconnected', () => {
-            console.info('TikTok: Disconnected');
         });
 
         tiktokConnection.on('error', err => {
@@ -408,11 +403,9 @@ let youtubeClient = null; // Stored for sending messages
 const initYoutube = async () => {
     const tokens = getTokens('youtube');
     if (!tokens || !tokens.accessToken) {
-        console.log("YouTube: No OAuth token found.");
         return;
     }
 
-    console.log("YouTube: Initializing...");
     const oauth2Client = new google.auth.OAuth2(
         process.env.YOUTUBE_CLIENT_ID,
         process.env.YOUTUBE_CLIENT_SECRET
@@ -424,7 +417,7 @@ const initYoutube = async () => {
 
     // Handle Token Refresh Updates
     oauth2Client.on('tokens', (newTokens) => {
-        console.log("YouTube: Token Refreshed!");
+
         if (newTokens.refresh_token) {
             tokens.refreshToken = newTokens.refresh_token;
         }
@@ -445,13 +438,11 @@ const initYoutube = async () => {
         });
 
         if (broadcastResp.data.items.length === 0) {
-            console.log("YouTube: No active broadcast found.");
             return;
         }
 
         const broadcast = broadcastResp.data.items[0];
         youtubeLiveChatId = broadcast.snippet.liveChatId;
-        console.log(`YouTube: Connected to Live Chat ID: ${youtubeLiveChatId} (Broadcasting: ${broadcast.snippet.title})`);
 
         // Start Polling
         startYoutubePolling(youtube);
@@ -597,7 +588,6 @@ app.post('/api/auth/:platform/disconnect', (req, res) => {
     }
 
     setToken(platform, null);
-    console.log(`[Auth] Disconnected ${platform}`);
     res.json({ success: true });
 });
 
@@ -664,12 +654,10 @@ if (process.env.STREAMELEMENTS_JWT) {
 
         // Connection handling
         io.on('connection', (socket) => {
-            console.log('Frontend connected');
             socket.emit('history', chatHistory);
 
             // SIMULATION HANDLER
             socket.on('simulate-event', ({ type, data }) => {
-                console.log(`[SIMULATION] ${type} from client`);
                 if (type === 'chat' && data) {
                     normalizeMsg(data.platform, data.user, data.text, data.color);
                 } else if (type === 'activity' && data) {
@@ -679,7 +667,6 @@ if (process.env.STREAMELEMENTS_JWT) {
 
             // Handle sending messages (Duplicated internal logic, but shared IO scope)
             socket.on('send-message', async ({ platform, text }) => {
-                console.log(`Sending to ${platform}: ${text}`);
                 let sentToLoopback = false;
 
                 try {
@@ -698,20 +685,28 @@ if (process.env.STREAMELEMENTS_JWT) {
                     // KICK (Public v1 API)
                     if (platform === 'kick' || platform === 'all') {
                         const kTokens = getTokens('kick');
-                        if (kTokens && kTokens.accessToken && kickSession.userId) {
+
+                        // Docs: broadcaster_user_id is required for type="user". It's the ID of the channel to post to.
+                        // We assume we are posting to our own channel (authenticated user).
+                        const targetId = kickSession.userId;
+
+                        if (kTokens && kTokens.accessToken && targetId) {
                             try {
-                                await axios.post('https://api.kick.com/public/v1/chat', {
-                                    broadcaster_user_id: kickSession.userId,
+                                const payload = {
+                                    broadcaster_user_id: parseInt(targetId, 10),
                                     content: text,
                                     type: "user"
-                                }, {
+                                };
+                                // console.log("Kick: Sending Payload:", JSON.stringify(payload));
+                                await axios.post('https://api.kick.com/public/v1/chat', payload, {
                                     headers: {
                                         'Authorization': `Bearer ${kTokens.accessToken}`,
                                         'Content-Type': 'application/json',
                                         'Accept': 'application/json'
                                     }
                                 });
-                                console.log("Kick Message Sent (v1/chat)!");
+
+                                // console.log("Kick Message Sent (v1/chat)!");
                                 if (!sentToLoopback) {
                                     normalizeMsg('kick', kickSession.username || 'Me', text, '#00FF00', null, null);
                                     sentToLoopback = true;
@@ -737,7 +732,6 @@ if (process.env.STREAMELEMENTS_JWT) {
                                     }
                                 }
                             });
-                            console.log("YouTube Message Sent!");
                             if (!sentToLoopback) {
                                 normalizeMsg('youtube', 'Me', text, '#FF0000', null, null);
                                 sentToLoopback = true;

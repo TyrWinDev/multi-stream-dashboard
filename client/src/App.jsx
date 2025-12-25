@@ -5,6 +5,7 @@ import { MessageSquare, Gift, Heart, UserPlus, Zap, Reply } from 'lucide-react';
 import DashboardLayout from './components/DashboardLayout';
 import ChatDock from './components/ChatDock';
 import ActivityDock from './components/ActivityDock';
+import AlertsDock from './components/AlertsDock';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
@@ -184,7 +185,6 @@ function App() {
         const socket = socketRef.current;
 
         socket.on('connect', () => {
-            console.log('Connected to backend');
         });
 
         socket.on('chat-message', (msg) => {
@@ -274,6 +274,11 @@ function App() {
                         activities={activities}
                         getActivityStyle={getActivityStyle}
                     />
+                } />
+
+                {/* Standalone Alerts Dock / OBS Source */}
+                <Route path="/alerts" element={
+                    <AlertsDock />
                 } />
             </Routes>
         </div>

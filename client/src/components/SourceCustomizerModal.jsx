@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Copy, Check, Monitor, Layout, Type, Palette, Zap, Settings2 } from 'lucide-react';
 import ChatDock from './ChatDock';
 import ActivityDock from './ActivityDock';
+import AlertOverlay from './AlertOverlay';
 
 // Mock Data for Preview
 const MOCK_MESSAGES = [
@@ -90,6 +91,9 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
     const generateUrl = () => {
         const baseUrl = `${window.location.origin}/${type}`;
         const params = new URLSearchParams();
+
+        // Alerts allow params now!
+
         if (config.bgType === 'transparent') {
             params.append('transparent', 'true');
         } else {
@@ -205,7 +209,7 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                     <div className="flex items-center space-x-3">
                         <div className="p-2 bg-accent/10 rounded-lg"><Monitor className="w-6 h-6 text-accent" /></div>
                         <div>
-                            <h2 className="text-xl font-bold text-white">Customize {type === 'chat' ? 'Chat' : 'Activity Feed'} Source</h2>
+                            <h2 className="text-xl font-bold text-white">Customize {type === 'chat' ? 'Chat' : type === 'activity' ? 'Activity Feed' : 'Alerts'} Source</h2>
                             <p className="text-xs text-gray-400">Design your overlay and copy the URL for OBS</p>
                         </div>
                     </div>
@@ -281,6 +285,7 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                                     ) : (
                                         <>
                                             <option value="top">Top</option>
+                                            <option value="center">Center</option>
                                             <option value="bottom">Bottom</option>
                                         </>
                                     )}
@@ -392,8 +397,18 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                         }}>
                             {type === 'chat' ? (
                                 <ChatDock messages={previewMessages} authStatus={{ twitch: { username: 'MyStream' } }} previewConfig={config} />
-                            ) : (
+                            ) : type === 'activity' ? (
                                 <ActivityDock activities={previewActivities} previewConfig={config} />
+                            ) : (
+                                <div className="flex-1 relative w-full h-full">
+                                    <AlertOverlay
+                                        latestEvent={previewActivities.length > 0 ? previewActivities[previewActivities.length - 1] : null}
+                                        onComplete={() => { }}
+                                        position={config.position}
+                                        fixed={false}
+                                    />
+                                    {previewActivities.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">Trigger a test activity to see the alert!</div>}
+                                </div>
                             )}
                         </div>
                         {/* Bottom bar */}
@@ -410,6 +425,9 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                             )}
                             {type === 'activity' && (
                                 <button onClick={addTestActivity} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded shrink-0">Test Activity</button>
+                            )}
+                            {type === 'alerts' && (
+                                <button onClick={addTestActivity} className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded shrink-0">Test Alert</button>
                             )}
                         </div>
                     </div>

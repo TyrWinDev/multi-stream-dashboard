@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { Heart, UserPlus, Gift, Zap, Star } from 'lucide-react';
 
-const AlertOverlay = ({ latestEvent, onComplete }) => {
+const AlertOverlay = ({ latestEvent, onComplete, position = 'center', fixed = true }) => {
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
@@ -163,8 +163,20 @@ const AlertOverlay = ({ latestEvent, onComplete }) => {
 
     const platformColor = getPlatformColor(latestEvent.platform);
 
+    const getPositionClasses = () => {
+        switch (position) {
+            case 'top_left': return 'items-start justify-start p-12';
+            case 'top_right': return 'items-start justify-end p-12';
+            case 'top_center': case 'top': return 'items-start justify-center pt-12';
+            case 'bottom_left': return 'items-end justify-start p-12';
+            case 'bottom_right': return 'items-end justify-end p-12';
+            case 'bottom_center': case 'bottom': return 'items-end justify-center pb-12';
+            case 'center': default: return 'items-center justify-center';
+        }
+    };
+
     return (
-        <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-[100]">
+        <div className={`${fixed ? 'fixed' : 'absolute'} inset-0 pointer-events-none flex z-[100] ${getPositionClasses()}`}>
             <div
                 className={`
                     bg-[#1a1a1a] border-4 rounded-2xl p-8 shadow-2xl

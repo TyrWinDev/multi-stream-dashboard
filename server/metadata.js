@@ -31,7 +31,6 @@ const updateTwitchMetadata = async (title, gameId) => {
             'Content-Type': 'application/json'
         }
     });
-    console.log(`[Twitch] Updated Metadata: ${title} / GameID: ${gameId}`);
     return true;
 };
 
@@ -80,7 +79,6 @@ const updateYoutubeMetadata = async (title, categoryId) => {
     });
 
     if (!broadcastResp.data.items || broadcastResp.data.items.length === 0) {
-        console.log("[YouTube] No active broadcast found to update.");
         return false;
     }
 
@@ -103,7 +101,6 @@ const updateYoutubeMetadata = async (title, categoryId) => {
         part: 'snippet',
         resource: updateBody
     });
-    console.log(`[YouTube] Updated Broadcast Title: ${title}`);
     return true;
 };
 
@@ -141,7 +138,6 @@ const updateKickMetadata = async (title, gameName) => {
             // Simple exact match or first result
             const match = categories.find(c => c.name.toLowerCase() === gameName.toLowerCase()) || categories[0];
             categoryId = match.id;
-            console.log(`[Kick] Resolved Game '${gameName}' to Category ID: ${categoryId} (${match.name})`);
         } else {
             console.warn(`[Kick] Could not find category for '${gameName}'`);
         }
@@ -161,7 +157,6 @@ const updateKickMetadata = async (title, gameName) => {
                 'Content-Type': 'application/json'
             }
         });
-        console.log(`[Kick] Updated Metadata: ${title} / CatID: ${categoryId}`);
         return true;
     } catch (e) {
         console.error("[Kick] Update Failed:", e.response?.data?.message || e.message);

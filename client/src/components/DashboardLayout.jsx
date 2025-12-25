@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Zap, Reply, UserPlus, Heart, Gift, Camera, ExternalLink, Settings2 } from 'lucide-react';
+import { MessageSquare, Zap, Reply, UserPlus, Heart, Gift, Camera, ExternalLink, Settings2, Bell } from 'lucide-react';
 import ChatInput from './ChatInput';
 import StreamManager from './StreamManager';
 import StatusBar from './StatusBar';
@@ -189,6 +189,14 @@ const DashboardLayout = ({
                                 title="Activity Settings (Customize)"
                             >
                                 <Settings2 className="w-4 h-4" />
+                            </button>
+                            {/* Alerts Settings */}
+                            <button
+                                onClick={() => setActiveCustomizer('alerts')}
+                                className="p-2 rounded-full hover:bg-white/10 text-muted hover:text-accent transition-colors"
+                                title="Alerts Settings (Browser Source)"
+                            >
+                                <Bell className="w-4 h-4" />
                             </button>
                             {/* Popout */}
                             <button

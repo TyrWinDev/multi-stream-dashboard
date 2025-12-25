@@ -92,7 +92,7 @@ const refreshTwitchToken = async () => {
             expiry: Date.now() + (resp.data.expires_in * 1000)
         };
         saveTokens();
-        console.log("Twitch Token Refreshed Successfully");
+
         return tokens.twitch.accessToken;
 
     } catch (e) {

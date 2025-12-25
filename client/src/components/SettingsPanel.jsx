@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, ExternalLink, RefreshCw, Power, Settings, Lock } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
 const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggleAlerts, currentTheme, onSetTheme }) => {
     // Click Outside Handler

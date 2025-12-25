@@ -21,6 +21,9 @@ const ChatInput = ({ onSend, replyingTo, onCancelReply }) => {
         if (!text.trim()) return;
         onSend(platform, text);
         setText('');
+        // Reset height
+        const textarea = document.getElementById('chat-input');
+        if (textarea) textarea.style.height = 'auto';
         if (replyingTo) onCancelReply();
     };
 
@@ -66,18 +69,32 @@ const ChatInput = ({ onSend, replyingTo, onCancelReply }) => {
                     </button>
                 </div>
 
-                <div className="flex gap-2">
-                    <input
+                <div className="flex gap-2 relative items-end">
+                    <textarea
                         id="chat-input"
-                        type="text"
+                        rows={1}
                         value={text}
-                        onChange={(e) => setText(e.target.value)}
+                        maxLength={350}
+                        onChange={(e) => {
+                            setText(e.target.value);
+                            e.target.style.height = 'auto'; // Reset height
+                            e.target.style.height = e.target.scrollHeight + 'px'; // Set new height
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSend(e);
+                            }
+                        }}
                         placeholder={replyingTo ? `Reply to @${replyingTo.user}...` : `Send to ${platform}...`}
-                        className="flex-1 bg-[#0f0f0f] text-white border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                        className="flex-1 bg-[#0f0f0f] text-white border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 pr-16 resize-none overflow-hidden min-h-[38px] max-h-[150px]"
                     />
+                    <div className={`absolute right-14 bottom-2 text-[10px] font-mono pointer-events-none ${text.length >= 350 ? 'text-red-500' : text.length > 300 ? 'text-orange-500' : 'text-gray-500'}`}>
+                        {text.length}/350
+                    </div>
                     <button
                         type="submit"
-                        className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                        className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition h-[38px] flex items-center justify-center"
                     >
                         <Send className="w-5 h-5" />
                     </button>
