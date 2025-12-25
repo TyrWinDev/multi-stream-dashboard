@@ -25,7 +25,9 @@ const SocialRotatorWidget = ({ socket, state }) => {
 
     if (!state?.handles || state.handles.length === 0) return null;
 
-    const currentItem = state.handles[index];
+    // Safety: If index is out of bounds (e.g. handle removed), reset or clamp
+    const safeIndex = index % state.handles.length;
+    const currentItem = state.handles[safeIndex];
     const Icon = IconMap[currentItem.platform?.toLowerCase()] || null;
 
     return (

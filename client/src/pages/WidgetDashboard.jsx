@@ -4,6 +4,8 @@ import { Plus, Minus, Play, Pause, RotateCcw } from 'lucide-react';
 const WidgetDashboard = ({ socket, widgetState }) => {
     // Local state for forms before saving/emitting
     const [, setCounterTitle] = useState('');
+    const [newSocialPlatform, setNewSocialPlatform] = useState('twitter');
+    const [newSocialHandle, setNewSocialHandle] = useState('');
 
     // --- Handlers ---
     const updateCounter = (delta) => {
@@ -272,11 +274,65 @@ const WidgetDashboard = ({ socket, widgetState }) => {
                     <div className="space-y-2">
                         {widgetState.social.handles.map((h, i) => (
                             <div key={i} className="flex justify-between items-center bg-secondary p-2 rounded text-main border border-border">
-                                <span className="capitalize text-sm font-medium">{h.platform}:</span>
-                                <span className="text-muted text-sm">{h.handle}</span>
+                                <span className="capitalize text-sm font-medium flex items-center gap-2">
+                                    <span className="opacity-50 text-xs">#{i + 1}</span>
+                                    {h.platform}:
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-muted text-sm">{h.handle}</span>
+                                    <button
+                                        className="text-red-500 hover:text-red-400 p-1"
+                                        onClick={() => {
+                                            const newHandles = widgetState.social.handles.filter((_, idx) => idx !== i);
+                                            socket.emit('widget-action', { type: 'social-update', payload: { handles: newHandles } });
+                                        }}
+                                    >
+                                        <Minus className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         ))}
-                        <div className="text-center text-xs text-muted mt-2 italic">(Editing coming in v1.4)</div>
+
+                        <div className="flex gap-2 mt-4 pt-4 border-t border-border">
+                            <select
+                                className="bg-secondary border border-border text-main rounded text-xs p-2 w-[110px]"
+                                value={newSocialPlatform}
+                                onChange={(e) => setNewSocialPlatform(e.target.value)}
+                            >
+                                <option value="twitter">Twitter</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="youtube">YouTube</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="twitch">Twitch</option>
+                                <option value="tiktok">TikTok</option>
+                            </select>
+                            <input
+                                type="text"
+                                placeholder="@handle"
+                                className="bg-secondary border border-border text-main rounded text-xs p-2 flex-1 min-w-0"
+                                value={newSocialHandle}
+                                onChange={(e) => setNewSocialHandle(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        if (!newSocialHandle) return;
+                                        const newHandles = [...widgetState.social.handles, { platform: newSocialPlatform, handle: newSocialHandle }];
+                                        socket.emit('widget-action', { type: 'social-update', payload: { handles: newHandles } });
+                                        setNewSocialHandle('');
+                                    }
+                                }}
+                            />
+                            <button
+                                className="bg-accent hover:bg-accent-hover text-white rounded p-2"
+                                onClick={() => {
+                                    if (!newSocialHandle) return;
+                                    const newHandles = [...widgetState.social.handles, { platform: newSocialPlatform, handle: newSocialHandle }];
+                                    socket.emit('widget-action', { type: 'social-update', payload: { handles: newHandles } });
+                                    setNewSocialHandle('');
+                                }}
+                            >
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                 </Card>
 
