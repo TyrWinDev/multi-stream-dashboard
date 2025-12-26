@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Unified Stream Dashboard",
   "main": "main.js",
-  "author": "TyrWinDev",
+  "author": {
+    "name": "Tyr Winter",
+    "email": "tyr@example.com"
+  },
   "license": "ISC",
   "scripts": {
     "start": "electron .",

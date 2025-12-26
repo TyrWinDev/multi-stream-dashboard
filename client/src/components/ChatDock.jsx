@@ -5,11 +5,11 @@ import ChatInput from './ChatInput';
 import SourceCustomizerModal from './SourceCustomizerModal';
 import { Settings2, Copy } from 'lucide-react';
 
-const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo, mentions, previewConfig }) => {
+const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo, mentions, previewConfig, widgetConfig }) => {
     const [searchParams] = useSearchParams();
     const [showSettings, setShowSettings] = useState(false);
 
-    // Resolve Configuration (Preview Prop vs URL Params)
+    // Resolve Configuration (Preview Prop vs URL Params vs Socket State)
     const config = previewConfig || {
         font: searchParams.get('font') || 'inter',
         size: parseInt(searchParams.get('size') || '14'),
@@ -22,7 +22,10 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
         fadeOut: parseInt(searchParams.get('fade_out') || '0'),
         position: searchParams.get('position') || 'bottom_left',
         reverse: searchParams.get('reverse') === 'true',
-        rounded: searchParams.get('rounded') !== 'false'
+        rounded: searchParams.get('rounded') !== 'false',
+        // State Overrides (if invalid in URL)
+        width: parseInt(searchParams.get('width')) || widgetConfig?.width || 400,
+        height: parseInt(searchParams.get('height')) || widgetConfig?.height || 750,
     };
 
     // Construct background color
@@ -168,8 +171,13 @@ const ChatDock = ({ messages, authStatus, sendMessage, replyingTo, setReplyingTo
         >
             {/* Inner Container (Background applied here) */}
             <div
-                className={`flex flex-col ${config.orientation === 'vertical' ? 'max-h-full w-full max-w-[600px] shadow-lg overflow-hidden' : 'h-full w-full'}`}
-                style={boxStyles}
+                className={`flex flex-col ${config.orientation === 'vertical' ? 'shadow-lg overflow-hidden' : 'h-full w-full'}`}
+                style={{
+                    ...boxStyles,
+                    width: config.orientation === 'vertical' ? `${config.width}px` : '100%',
+                    height: config.orientation === 'vertical' ? `${config.height}px` : '100%',
+                    maxWidth: '100vw' // Ensure it doesn't overflow viewport if set too large
+                }}
             >
                 {/* Header (Hidden unless popout) */}
                 {isPopout && (

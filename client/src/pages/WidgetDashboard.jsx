@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Minus, Play, Pause, RotateCcw, Square, CheckSquare } from 'lucide-react';
+import { Plus, Minus, Play, Pause, RotateCcw, Square, CheckSquare, Settings2 } from 'lucide-react';
 
 const WidgetDashboard = ({ socket, widgetState }) => {
     // Local state for forms before saving/emitting
@@ -9,6 +9,10 @@ const WidgetDashboard = ({ socket, widgetState }) => {
     const [newGoalText, setNewGoalText] = useState('');
     const [newSegmentText, setNewSegmentText] = useState('');
     const [newSegmentColor, setNewSegmentColor] = useState('#ef4444');
+
+    // Modal State
+    const [showCustomizer, setShowCustomizer] = useState(false);
+    const [customizerType, setCustomizerType] = useState('chat'); // 'chat' | 'activity' | 'counter' | 'alerts'
 
     // --- Handlers ---
     const updateCounter = (delta) => {
@@ -129,6 +133,49 @@ const WidgetDashboard = ({ socket, widgetState }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                {/* ALERTS OVERLAY */}
+                <Card title="Alerts Overlay">
+                    <div className="space-y-4">
+                        <div className="p-4 bg-secondary rounded-lg border border-border">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-main font-bold">Latest Alert</span>
+                                <span className="text-xs text-muted">Auto-Dismiss</span>
+                            </div>
+                            <div className="text-center py-4">
+                                {widgetState.latestActivity ? (
+                                    <div className="animate-fade-in">
+                                        <div className="text-accent font-black uppercase text-xl">{widgetState.latestActivity.type}</div>
+                                        <div className="text-main">{widgetState.latestActivity.user}</div>
+                                    </div>
+                                ) : (
+                                    <div className="text-muted italic text-sm">Waiting for events...</div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    setCustomizerType('alerts');
+                                    setShowCustomizer(true);
+                                }}
+                                className="flex-1 bg-accent hover:bg-accent-hover text-white py-2 rounded font-bold transition flex items-center justify-center gap-2"
+                            >
+                                <Settings2 className="w-4 h-4" /> Get URL
+                            </button>
+                            <button
+                                onClick={() => socket.emit('widget-action', { type: 'test-alert' })}
+                                className="flex-1 bg-secondary hover:bg-tertiary text-main border border-border py-2 rounded font-bold transition flex items-center justify-center gap-2"
+                            >
+                                <Play className="w-4 h-4" /> Test
+                            </button>
+                        </div>
+                        <p className="text-xs text-muted text-center pt-2">
+                            Global alerts that appear on top of your stream.
+                        </p>
+                    </div>
+                </Card>
 
                 {/* COUNTER */}
                 <Card title="Counter">

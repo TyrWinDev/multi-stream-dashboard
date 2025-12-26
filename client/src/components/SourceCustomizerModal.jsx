@@ -52,9 +52,12 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
         fadeOut: 0,
         position: 'bottom_left',
         reverse: false,
-        animation: 'fade', // Fix: Initialize animation to prevent undefined in URL
-        badges: true, // Fix: Initialize badges defaults to true
+        animation: 'fade',
+        badges: true,
         rounded: true,
+        // Dimensions
+        width: 400,
+        height: 750,
     });
 
     // Preview data state
@@ -107,9 +110,13 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
         if (config.orientation !== 'vertical') params.append('orientation', config.orientation);
         if (config.fadeOut > 0) params.append('fade_out', config.fadeOut);
         if (config.position) params.append('position', config.position);
-        if (config.position) params.append('position', config.position);
+
         if (config.reverse) params.append('reverse', 'true');
         if (!config.rounded) params.append('rounded', 'false');
+
+        // Dimensions
+        if (config.width !== 400) params.append('width', config.width);
+        if (config.height !== 750) params.append('height', config.height);
 
         if (type === 'activity') {
             if (config.activityColorMode !== 'simple') params.append('color_mode', config.activityColorMode);
@@ -173,6 +180,12 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
 
             if (params.get('reverse') === 'true') newConfig.reverse = true;
             if (params.get('rounded') === 'false') newConfig.rounded = false;
+
+            // Dimensions
+            const w = params.get('width');
+            if (w) newConfig.width = parseInt(w);
+            const h = params.get('height');
+            if (h) newConfig.height = parseInt(h);
 
             // Activity Specific
             if (type === 'activity') {
@@ -267,29 +280,50 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Dimensions (Vertical Only) */}
+                            {config.orientation === 'vertical' && (
+                                <div className="space-y-3 pt-2 border-t border-gray-800">
+                                    <div className="flex items-center text-sm font-bold text-gray-300">Dimensions</div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-gray-500">Width (px)</label>
+                                            <input type="number" value={config.width} onChange={(e) => setConfig({ ...config, width: parseInt(e.target.value) })} className="w-full bg-black/30 border border-gray-700 rounded-lg px-2 py-1.5 text-sm text-white focus:border-accent outline-none" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-gray-500">Height (px)</label>
+                                            <input type="number" value={config.height} onChange={(e) => setConfig({ ...config, height: parseInt(e.target.value) })} className="w-full bg-black/30 border border-gray-700 rounded-lg px-2 py-1.5 text-sm text-white focus:border-accent outline-none" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Position & Order */}
-                            <div className="space-y-1">
-                                <label className="text-xs text-gray-500">Position</label>
-                                <select
-                                    value={config.position}
-                                    onChange={(e) => setConfig({ ...config, position: e.target.value })}
-                                    className="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-accent outline-none"
-                                >
-                                    {config.orientation === 'vertical' ? (
-                                        <>
-                                            <option value="top_left">Top Left</option>
-                                            <option value="top_right">Top Right</option>
-                                            <option value="bottom_left">Bottom Left</option>
-                                            <option value="bottom_right">Bottom Right</option>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <option value="top">Top</option>
-                                            <option value="center">Center</option>
-                                            <option value="bottom">Bottom</option>
-                                        </>
-                                    )}
-                                </select>
+                            {/* Position & Order */}
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Position</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { id: 'top_left', label: 'TL', title: 'Top Left' },
+                                        { id: 'top_center', label: 'TC', title: 'Top Center' },
+                                        { id: 'top_right', label: 'TR', title: 'Top Right' },
+                                        { id: 'center_left', label: 'CL', title: 'Center Left' },
+                                        { id: 'center', label: 'C', title: 'Center' },
+                                        { id: 'center_right', label: 'CR', title: 'Center Right' },
+                                        { id: 'bottom_left', label: 'BL', title: 'Bottom Left' },
+                                        { id: 'bottom_center', label: 'BC', title: 'Bottom Center' },
+                                        { id: 'bottom_right', label: 'BR', title: 'Bottom Right' }
+                                    ].map((pos) => (
+                                        <button
+                                            key={pos.id}
+                                            onClick={() => setConfig({ ...config, position: pos.id })}
+                                            title={pos.title}
+                                            className={`p-3 rounded-lg border transition-all flex items-center justify-center font-mono text-xs ${config.position === pos.id ? 'bg-accent border-accent text-white shadow-lg shadow-accent/20' : 'bg-black/20 border-gray-800 text-gray-400 hover:border-gray-600 hover:text-gray-200'}`}
+                                        >
+                                            {pos.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg border border-gray-800">
@@ -379,6 +413,11 @@ const SourceCustomizerModal = ({ isOpen, onClose, type = 'chat', onSimulate }) =
                             <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg border border-gray-800">
                                 <span className="text-sm text-gray-300">Show Badges</span>
                                 <input type="checkbox" checked={config.badges} onChange={(e) => setConfig({ ...config, badges: e.target.checked })} className="accent-accent w-4 h-4" />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg border border-gray-800">
+                                <span className="text-sm text-gray-300">Show Avatars</span>
+                                <input type="checkbox" checked={config.avatars} onChange={(e) => setConfig({ ...config, avatars: e.target.checked })} className="accent-accent w-4 h-4" />
                             </div>
                         </div>
                         {/* Animation */}

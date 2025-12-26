@@ -777,9 +777,17 @@ if (process.env.NODE_ENV === 'production' || !!process.versions.electron) {
                     widgetState.wheel = { ...widgetState.wheel, ...payload };
                     if (payload.winner) widgetState.wheel.winner = payload.winner;
                 }
+                if (type === 'chat-update') widgetState.chat = { ...widgetState.chat, ...payload };
                 if (type === 'highlight-update') widgetState.highlight = { ...widgetState.highlight, ...payload };
                 if (type === 'activity-update') widgetState.activity = { ...widgetState.activity, ...payload };
                 if (type === 'highlight-message') widgetState.highlight = { message: payload };
+
+                // Test Alert
+                if (type === 'test-alert') {
+                    const types = ['follow', 'sub', 'tip', 'gift'];
+                    const randType = types[Math.floor(Math.random() * types.length)];
+                    emitActivity(randType, 'system', 'Test User', 'Just testing the alert!');
+                }
 
                 // Persist State
                 storage.saveState(widgetState);
@@ -796,9 +804,12 @@ if (process.env.NODE_ENV === 'production' || !!process.versions.electron) {
                 try {
                     // TWITCH
                     if ((platform === 'twitch' || platform === 'all') && twitchClient) {
-                        twitchClient.say(process.env.TWITCH_CHANNEL, text).catch(err => {
-                            console.error("Twitch Send Error:", err);
-                        });
+                        const target = process.env.TWITCH_CHANNEL || (twitchClient.getChannels()[0]);
+                        if (target) {
+                            twitchClient.say(target, text).catch(err => {
+                                console.error("Twitch Send Error:", err);
+                            });
+                        }
                         if (!sentToLoopback) {
                             const twitchUser = getTokens('twitch')?.username || process.env.TWITCH_CHANNEL || 'Me';
                             normalizeMsg('twitch', twitchUser, text, '#FFFFFF', null, null);

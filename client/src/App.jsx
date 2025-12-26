@@ -345,6 +345,7 @@ function App() {
                         sendMessage={sendMessage}
                         replyingTo={replyingTo}
                         setReplyingTo={setReplyingTo}
+                        widgetConfig={widgetState?.chat}
                     />
                 } />
 

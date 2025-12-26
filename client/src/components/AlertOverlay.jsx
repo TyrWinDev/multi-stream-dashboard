@@ -168,9 +168,14 @@ const AlertOverlay = ({ latestEvent, onComplete, position = 'center', fixed = tr
             case 'top_left': return 'items-start justify-start p-12';
             case 'top_right': return 'items-start justify-end p-12';
             case 'top_center': case 'top': return 'items-start justify-center pt-12';
+
+            case 'center_left': return 'items-center justify-start p-12';
+            case 'center_right': return 'items-center justify-end p-12';
+
             case 'bottom_left': return 'items-end justify-start p-12';
             case 'bottom_right': return 'items-end justify-end p-12';
             case 'bottom_center': case 'bottom': return 'items-end justify-center pb-12';
+
             case 'center': default: return 'items-center justify-center';
         }
     };
