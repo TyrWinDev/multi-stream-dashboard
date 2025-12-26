@@ -2,8 +2,25 @@ const axios = require('axios');
 const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
-const TOKEN_PATH = path.join(__dirname, 'tokens.json');
+// --- IO Reference ---
+let io = null;
+const setAuthIO = (socketIO) => { io = socketIO; };
+
+// Determine token path based on environment
+let TOKEN_PATH;
+if (process.versions.electron) {
+    const { app } = require('electron');
+    // Ensure the data directory exists
+    const DATA_DIR = path.join(app.getPath('userData'), 'data');
+    if (!fs.existsSync(DATA_DIR)) {
+        try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) { }
+    }
+    TOKEN_PATH = path.join(DATA_DIR, 'tokens.json');
+} else {
+    TOKEN_PATH = path.join(__dirname, 'tokens.json');
+}
 
 // --- Token Management ---
 let tokens = {};
@@ -16,10 +33,20 @@ if (fs.existsSync(TOKEN_PATH)) {
 }
 
 const saveTokens = () => {
-    fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens, null, 2));
+    try {
+        fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens, null, 2));
+        if (io) io.emit('auth-update', { updated: Date.now() });
+    } catch (e) {
+        console.error("Failed to save tokens:", e);
+    }
 };
 
 const getTokens = (platform) => tokens[platform];
+
+const setToken = (platform, data) => {
+    tokens[platform] = data;
+    saveTokens();
+};
 
 const SERVER_BASE_URL = process.env.SERVER_URL || `https://localhost:${process.env.PORT || 3001}`;
 const CLIENT_BASE_URL = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -115,7 +142,6 @@ const refreshTwitchToken = async () => {
 // --- Kick OAuth (PKCE) ---
 const KICK_AUTH_URL = 'https://id.kick.com/oauth/authorize';
 const KICK_TOKEN_URL = 'https://id.kick.com/oauth/token';
-const crypto = require('crypto');
 
 // In-memory store for PKCE verifiers (Map<state, verifier>)
 // In prod, use Redis or DB
@@ -140,7 +166,7 @@ const startKickAuth = (res) => {
     pkceStore.set(state, codeVerifier);
 
     // Clean store periodically (simple TTL implementation)
-    setTimeout(() => pkceStore.delete(state), 300000); // 5 min TTL
+    setTimeout(() => pkceStore.delete(state), 500 * 1000); // 5 min TTL
 
     const params = new URLSearchParams({
         client_id: process.env.KICK_CLIENT_ID,
@@ -238,8 +264,8 @@ const handleYoutubeCallback = async (req, res) => {
     }
 };
 
-const setToken = (platform, data) => {
-    tokens[platform] = data;
+const logoutAll = () => {
+    tokens = {};
     saveTokens();
 };
 
@@ -252,5 +278,7 @@ module.exports = {
     startKickAuth,
     handleKickCallback,
     startYoutubeAuth,
-    handleYoutubeCallback
+    handleYoutubeCallback,
+    setAuthIO,
+    logoutAll
 };

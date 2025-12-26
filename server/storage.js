@@ -1,7 +1,17 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA_DIR = path.join(__dirname, 'data');
+// Determine storage path based on environment
+let DATA_DIR;
+if (process.versions.electron) {
+    // In Electron, use userData directory (writable)
+    const { app } = require('electron');
+    DATA_DIR = path.join(app.getPath('userData'), 'data');
+} else {
+    // In development, use local directory
+    DATA_DIR = path.join(__dirname, 'data');
+}
+
 const DATA_FILE = path.join(DATA_DIR, 'widgets.json');
 
 // Ensure data directory exists
@@ -13,14 +23,14 @@ if (!fs.existsSync(DATA_DIR)) {
 const defaultState = {
     global: { theme: 'default', transparent: false, font: 'sans', animation: 'fade-in' },
     counter: { count: 0, title: 'Counter', step: 1, sound: false },
-    timer: { 
-        seconds: 300, 
-        isRunning: false, 
-        mode: 'countdown', 
-        showCircle: true, 
-        alarm: false 
+    timer: {
+        seconds: 300,
+        isRunning: false,
+        mode: 'countdown',
+        showCircle: true,
+        alarm: false
     },
-    social: { 
+    social: {
         handles: [
             { platform: 'twitter', handle: '@Streamer' },
             { platform: 'twitch', handle: 'StreamerLive' }
@@ -29,43 +39,43 @@ const defaultState = {
         layout: 'horizontal',
         showIcons: true
     },
-    progress: { 
-        current: 0, 
-        max: 100, 
+    progress: {
+        current: 0,
+        max: 100,
         title: 'Subscriber Goal',
         gradientStart: '#4f46e5',
         gradientEnd: '#ec4899',
         showPercentage: true,
         showFraction: true
     },
-    goals: { 
+    goals: {
         items: [
             { id: 1, text: 'Start Stream', completed: true },
             { id: 2, text: 'Just Chatting', completed: false },
             { id: 3, text: 'Game Time', completed: false }
-        ], 
+        ],
         title: 'Stream Goals',
         showCompleted: true
     },
-    wheel: { 
+    wheel: {
         segments: [
-             { id: 1, text: 'Prize 1', color: '#ef4444' },
-             { id: 2, text: 'Prize 2', color: '#3b82f6' },
-             { id: 3, text: 'Prize 3', color: '#10b981' },
-             { id: 4, text: 'Prize 4', color: '#f59e0b' }
+            { id: 1, text: 'Prize 1', color: '#ef4444' },
+            { id: 2, text: 'Prize 2', color: '#3b82f6' },
+            { id: 3, text: 'Prize 3', color: '#10b981' },
+            { id: 4, text: 'Prize 4', color: '#f59e0b' }
         ],
-        winner: null, 
+        winner: null,
         isSpinning: false,
         title: 'Spin Wheel'
     },
     highlight: { message: null, style: 'modern', autoHide: 0 },
-    activity: { 
-        limit: 5, 
-        filter: ['follow', 'sub', 'cheer', 'raid', 'donation'], 
-        layout: 'list', 
-        title: 'Recent Activity' 
+    activity: {
+        limit: 5,
+        filter: ['follow', 'sub', 'cheer', 'raid', 'donation'],
+        layout: 'list',
+        title: 'Recent Activity'
     },
-    recentEvents: [] 
+    recentEvents: []
 };
 
 /**

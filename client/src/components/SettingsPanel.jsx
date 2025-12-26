@@ -150,6 +150,22 @@ const SettingsPanel = ({ authStatus, isOpen, onClose, areAlertsEnabled, onToggle
                 </div>
 
                 <div>
+                    <div className="flex justify-end mb-2">
+                        <button
+                            onClick={async () => {
+                                if (confirm('Logout from ALL platforms? This will remove all local tokens.')) {
+                                    try {
+                                        await fetch(`${API_URL}/api/auth/logout-all`, { method: 'POST' });
+                                        window.location.reload();
+                                    } catch (e) { console.error(e); }
+                                }
+                            }}
+                            className="text-xs flex items-center bg-red-900/40 hover:bg-red-900/60 text-red-200 px-2 py-1 rounded border border-red-900/50 transition"
+                        >
+                            <Power className="w-3 h-3 mr-1" />
+                            Logout All
+                        </button>
+                    </div>
                     <div className="space-y-2">
                         {/* Kick Button */}
                         <button

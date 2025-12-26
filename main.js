@@ -1,17 +1,25 @@
 const { app, BrowserWindow, shell, Tray, Menu } = require('electron');
 const path = require('path');
-require('dotenv').config();
+// In production, .env is in resources/.env (extraResources)
+const envPath = app.isPackaged
+    ? path.join(process.resourcesPath, '.env')
+    : path.join(__dirname, '.env');
+require('dotenv').config({ path: envPath });
 
 // Set Production Env for Server to serve static files
 process.env.NODE_ENV = 'production';
-process.env.PORT = '3001'; // Internal Server Port
-process.env.CLIENT_URL = 'http://localhost:3002'; // The HTTP port server listens on + 1
+// Set Production Env for Server to serve static files
+process.env.NODE_ENV = 'production';
+// process.env.PORT = '3001'; // Default is 3001 (HTTPS) / 3002 (HTTP)
+// process.env.CLIENT_URL = 'http://localhost:3002';
 
 // Start the Backend Server (It runs in this same process)
 try {
+    const { dialog } = require('electron');
     require('./server/index.js');
 } catch (err) {
     console.error('Failed to start internal server:', err);
+    require('electron').dialog.showErrorBox('Server Error', err.message);
 }
 
 let mainWindow;
@@ -26,14 +34,17 @@ function createWindow() {
             nodeIntegration: false,
             contextIsolation: true,
         },
-        icon: path.join(__dirname, 'client/public/favicon.ico') // Assumption
+        icon: path.join(__dirname, 'client/public/favicon.ico')
     });
 
+    // DEBUG: Open DevTools to see errors (disabled for production)
+    // mainWindow.webContents.openDevTools();
+
     // Load the Dashboard URL Served by the local server
-    // We wait a bit or just retry? Server starts fast.
     // The HTTP port is PORT + 1 usually.
-    // In server/index.js: HTTP_PORT = parseInt(HTTPS_PORT) + 1;
-    const DASHBOARD_URL = `http://localhost:${parseInt(process.env.PORT) + 1}/dashboard`;
+    // If env.PORT is undefined, server uses 3001 -> HTTP 3002
+    const port = process.env.PORT ? parseInt(process.env.PORT) : 3001;
+    const DASHBOARD_URL = `http://localhost:${port + 1}/`;
 
     // Load URL with retry
     const loadWindow = () => {

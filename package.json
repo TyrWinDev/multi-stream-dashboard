@@ -28,15 +28,22 @@
       "target": "nsis"
     },
     "files": [
-      "main.js",
-      "server/**/*",
-      "client/dist/**/*",
-      "package.json",
-      "!server/node_modules/**",
-      "!client/node_modules/**",
-      "!**/.git/**"
+      "**/*",
+      "!**/*.ts",
+      "!*.code-workspace",
+      "!LICENSE",
+      "!README.md",
+      "!package-lock.json",
+      "!dist-electron/linux-unpacked",
+      "!dist",
+      "!release"
     ],
-    "asar": true
+    "extraResources": [
+      ".env"
+    ],
+    "asarUnpack": [
+      "node_modules/**"
+    ]
   },
   "dependencies": {
     "@retconned/kick-js": "^0.5.4",

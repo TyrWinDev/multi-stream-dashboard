@@ -9,7 +9,8 @@ import AlertsDock from './components/AlertsDock';
 import WidgetDashboard from './pages/WidgetDashboard';
 import WidgetStandalone from './pages/WidgetStandalone';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+// Use strict port 3002 for Dev (Vite), otherwise use current origin (Electron/Prod)
+const SOCKET_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3002' : window.location.origin);
 
 const PlatformIcon = ({ platform }) => {
     const colors = {
@@ -57,19 +58,32 @@ function App() {
         localStorage.setItem('alerts_enabled', areAlertsEnabled);
     }, [areAlertsEnabled]);
 
-    // Initial Auth Check & Emote Init
+    // Initial Auth Check & Socket Listeners
     useEffect(() => {
-        // ... existing auth ...
-        fetch(`${SOCKET_URL}/api/auth/status`)
-            .then(res => res.json())
-            .then(data => {
-                setAuthStatus({ ...data, loading: false });
-            })
-            .catch(err => setAuthStatus({ twitch: false, kick: false, loading: false }));
+        const fetchAuth = () => {
+            fetch(`${SOCKET_URL}/api/auth/status`)
+                .then(res => res.json())
+                .then(data => {
+                    setAuthStatus({ ...data, loading: false });
+                })
+                .catch(err => setAuthStatus(prev => ({ ...prev, loading: false })));
+        };
 
-        // HARDCODED FALLBACK FOR TESTING until we have dynamic ID:
-        // Use a known channel or user's provided channel if we had it.
-        // I'll leave this commented out until we confirm ID source.
+        fetchAuth();
+
+        // Listen for realtime auth updates (e.g. from browser login)
+        const socket = io(SOCKET_URL);
+        socketRef.current = socket;
+
+        socket.on('auth-update', () => {
+            console.log("Received Auth Update Signal!");
+            fetchAuth();
+        });
+
+        return () => {
+            socket.off('auth-update');
+            // Don't disconnect socket here as it's used elsewhere, strictly handle listeners
+        };
     }, []);
 
     // ... Connect Handlers ...

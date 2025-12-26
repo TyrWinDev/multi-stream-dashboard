@@ -1,4 +1,10 @@
-require('dotenv').config();
+const path = require('path');
+// Check if running in Electron and use resourcesPath
+const isElectronApp = process.versions.electron;
+const envPath = isElectronApp
+    ? path.join(process.resourcesPath, '.env')
+    : path.join(__dirname, '../.env');
+require('dotenv').config({ path: envPath });
 const { google } = require('googleapis');
 
 const express = require('express');
@@ -26,15 +32,13 @@ app.use(cors({ origin: CLIENT_URL }));
 app.use(express.json()); // Enable JSON body parsing
 
 // Serve Static Files (Production/Electron)
-if (process.env.NODE_ENV === 'production') {
+// Serve Static Files (Production/Electron)
+const isElectron = !!process.versions.electron;
+if (process.env.NODE_ENV === 'production' || isElectron) {
     const path = require('path');
     app.use(express.static(path.join(__dirname, '../client/dist')));
 
-    // Catch-all for React Router
-    app.get('*', (req, res) => {
-        if (req.path.startsWith('/api')) return res.status(404).send('Not Found');
-        res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-    });
+    // Note: Catch-all route moved to bottom of file to avoid blocking API
 } else {
     app.get('/', (req, res) => {
         res.send('<h1>Unified Stream Hub Server is Running! 🚀</h1><p>Go to <a href="' + CLIENT_URL + '">' + CLIENT_URL + '</a> to use the dashboard.</p>');
@@ -641,6 +645,7 @@ app.get('/api/stream/search-game', async (req, res) => {
     }
 });
 
+
 // --- API: Disconnect Platform ---
 app.post('/api/auth/:platform/disconnect', (req, res) => {
     const { platform } = req.params;
@@ -653,6 +658,19 @@ app.post('/api/auth/:platform/disconnect', (req, res) => {
     }
 
     setToken(platform, null);
+    res.json({ success: true });
+});
+
+app.post('/api/auth/logout-all', (req, res) => {
+    const { logoutAll } = require('./auth');
+    logoutAll();
+
+    // Also disconnect tiktok
+    if (tiktokConnection) {
+        tiktokConnection.disconnect();
+        tiktokConnection = null;
+    }
+
     res.json({ success: true });
 });
 
@@ -686,6 +704,15 @@ if (process.env.STREAMELEMENTS_JWT) {
 }
 
 
+// --- Catch-All for React Router (MUST BE LAST, after all API routes) ---
+// Use middleware instead of route to avoid path-to-regexp issues in Express 5
+if (process.env.NODE_ENV === 'production' || !!process.versions.electron) {
+    app.use((req, res) => {
+        const path = require('path');
+        res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    });
+}
+
 // --- ASYNC STARTUP (Moved to Bottom) ---
 (async () => {
     try {
@@ -716,6 +743,10 @@ if (process.env.STREAMELEMENTS_JWT) {
         });
         io.attach(httpsServer);
         io.attach(httpServer);
+
+        // Inject IO into Auth Module for updates
+        const { setAuthIO } = require('./auth');
+        setAuthIO(io);
 
         // Connection handling
         io.on('connection', (socket) => {
@@ -845,8 +876,12 @@ if (process.env.STREAMELEMENTS_JWT) {
         });
 
         httpServer.listen(HTTP_PORT, () => {
-            console.log(`\n🔓 HTTP Server running on port ${HTTP_PORT} (FOR OBS/CLIENT)`);
+            console.log(`\n🔓 HTTP Server running on port ${HTTP_PORT} (FOR DASHBOARD & OVERLAYS)`);
             console.log(`   URL: http://localhost:${HTTP_PORT}`);
+
+            if (process.env.NODE_ENV !== 'production' && !isElectron) {
+                console.log(`\n⚠️  NOTE: In Development, use the Vite Client URL: ${CLIENT_URL}`);
+            }
         });
 
         console.log(`\n⚠️  SSL NOTICE: You may need to visit https://localhost:${HTTPS_PORT}/api/diag to accept the certificate for Auth to work.`);
