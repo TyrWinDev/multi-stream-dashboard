@@ -25,9 +25,21 @@ const app = express();
 app.use(cors({ origin: CLIENT_URL }));
 app.use(express.json()); // Enable JSON body parsing
 
-app.get('/', (req, res) => {
-    res.send('<h1>Unified Stream Hub Server is Running! 🚀</h1><p>Go to <a href="' + CLIENT_URL + '">' + CLIENT_URL + '</a> to use the dashboard.</p>');
-});
+// Serve Static Files (Production/Electron)
+if (process.env.NODE_ENV === 'production') {
+    const path = require('path');
+    app.use(express.static(path.join(__dirname, '../client/dist')));
+
+    // Catch-all for React Router
+    app.get('*', (req, res) => {
+        if (req.path.startsWith('/api')) return res.status(404).send('Not Found');
+        res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    });
+} else {
+    app.get('/', (req, res) => {
+        res.send('<h1>Unified Stream Hub Server is Running! 🚀</h1><p>Go to <a href="' + CLIENT_URL + '">' + CLIENT_URL + '</a> to use the dashboard.</p>');
+    });
+}
 
 const https = require('https');
 const selfsigned = require('selfsigned');

@@ -1,0 +1,61 @@
+{
+  "name": "multi-stream-dashboard",
+  "version": "1.0.0",
+  "description": "Unified Stream Dashboard",
+  "main": "main.js",
+  "author": "TyrWinDev",
+  "license": "ISC",
+  "scripts": {
+    "start": "electron .",
+    "dist": "npm run build --prefix client && electron-builder",
+    "pack": "electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.tyrwindev.streamhub",
+    "productName": "StreamHub",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "files": [
+      "main.js",
+      "server/**/*",
+      "client/dist/**/*",
+      "package.json",
+      "!server/node_modules/**",
+      "!client/node_modules/**",
+      "!**/.git/**"
+    ],
+    "asar": true
+  },
+  "dependencies": {
+    "@retconned/kick-js": "^0.5.4",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "googleapis": "^169.0.0",
+    "selfsigned": "^5.4.0",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "tiktok-live-connector": "^2.1.1-beta1",
+    "tmi.js": "^1.8.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "wait-on": "^7.2.0"
+  }
+}

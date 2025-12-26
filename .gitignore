@@ -34,4 +34,14 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+dist-electron/
+
+# Private Server Data
 server/tokens.json
+server/data/*.json
+!server/data/widgets.json.example
+
+# Logs
+*.log
+server/*.log
+
