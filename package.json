@@ -7,7 +7,7 @@
   "license": "ISC",
   "scripts": {
     "start": "electron .",
-    "dist": "npm run build --prefix client && electron-builder",
+    "dist": "cp server/.env release.env && npm run build --prefix client && electron-builder",
     "pack": "electron-builder --dir",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -39,7 +39,7 @@
       "!release"
     ],
     "extraResources": [
-      ".env"
+      "release.env"
     ],
     "asarUnpack": [
       "node_modules/**"

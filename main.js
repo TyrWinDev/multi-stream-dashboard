@@ -7,11 +7,13 @@ const envPath = app.isPackaged
 require('dotenv').config({ path: envPath });
 
 // Set Production Env for Server to serve static files
-process.env.NODE_ENV = 'production';
+// Ignore Cert Errors for Self-Signed Localhost
+app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
+
 // Set Production Env for Server to serve static files
 process.env.NODE_ENV = 'production';
-// process.env.PORT = '3001'; // Default is 3001 (HTTPS) / 3002 (HTTP)
-// process.env.CLIENT_URL = 'http://localhost:3002';
+const port = process.env.PORT ? parseInt(process.env.PORT) : 3001;
+process.env.CLIENT_URL = `http://localhost:${port + 1}`;
 
 // Start the Backend Server (It runs in this same process)
 try {

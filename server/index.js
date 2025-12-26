@@ -2,7 +2,7 @@ const path = require('path');
 // Check if running in Electron and use resourcesPath
 const isElectronApp = process.versions.electron;
 const envPath = isElectronApp
-    ? path.join(process.resourcesPath, '.env')
+    ? path.join(process.resourcesPath, 'release.env')
     : path.join(__dirname, '../.env');
 require('dotenv').config({ path: envPath });
 const { google } = require('googleapis');
@@ -278,7 +278,7 @@ app.get('/api/auth/status', async (req, res) => {
 let twitchClient;
 const initTwitch = async () => {
     const tokens = getTokens('twitch');
-    const channels = [process.env.TWITCH_CHANNEL];
+    // const channels = [process.env.TWITCH_CHANNEL]; // Moved below
 
     if (!tokens || !tokens.accessToken) {
         return;
@@ -297,11 +297,13 @@ const initTwitch = async () => {
         });
         if (resp.data.data?.[0]) {
             username = resp.data.data[0].login; // Use login name (lowercase)
-            // Update token with username if needed or just use it here
         }
     } catch (e) {
         console.warn("Twitch: Failed to fetch username from token, defaulting to env/anon:", e.message);
     }
+
+    const targetChannel = process.env.TWITCH_CHANNEL || username;
+    const channels = [targetChannel];
 
     const opts = {
         options: { debug: true, messagesLogLevel: "info" },

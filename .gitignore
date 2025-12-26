@@ -45,3 +45,4 @@ server/data/*.json
 *.log
 server/*.log
 
+release.env
